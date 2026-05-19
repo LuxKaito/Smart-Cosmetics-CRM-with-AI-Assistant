@@ -1,46 +1,41 @@
-import { apiRequest } from "../lib/apiClient";
-
 export interface AddressSuggestion {
+    provider?: "vietmap";
     placeId: string;
-    description: string;
+    displayName: string;
     mainText: string;
     secondaryText: string;
-}
-
-export interface AddressDetail {
-    placeId: string;
-    formattedAddress: string;
-    province: string;
-    district: string;
-    ward: string;
-    addressLine: string;
-    location: {
-        lat: number;
-        lng: number;
-    };
+    lat: number;
+    lon: number;
+    address: Record<string, string>;
 }
 
 export async function fetchVietnamAddressSuggestions(
     query: string,
 ): Promise<AddressSuggestion[]> {
     const q = query.trim();
-    if (q.length < 2) return [];
+    if (q.length < 3) return [];
 
-    const data = await apiRequest<{ suggestions: AddressSuggestion[] }>({
-        url: "/checkout/address/suggest",
-        params: { q },
+    const response = await fetch(`/api/address?q=${encodeURIComponent(q)}`, {
+        method: "GET",
+        cache: "no-store",
     });
 
-    return data?.suggestions || [];
-}
+    let payload: unknown = null;
+    try {
+        payload = await response.json();
+    } catch {
+        payload = null;
+    }
 
-export async function fetchVietnamAddressDetail(
-    placeId: string,
-): Promise<AddressDetail> {
-    const data = await apiRequest<{ address: AddressDetail }>({
-        url: "/checkout/address/detail",
-        params: { placeId },
-    });
+    const data = payload as {
+        success?: boolean;
+        message?: string;
+        data?: { suggestions?: AddressSuggestion[] };
+    } | null;
 
-    return data.address;
+    if (!response.ok || !data?.success) {
+        throw new Error(data?.message || "Có lỗi khi tìm địa chỉ");
+    }
+
+    return data.data?.suggestions || [];
 }

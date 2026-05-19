@@ -18,9 +18,13 @@ export interface CheckoutSummaryItem {
 export interface CheckoutShippingInfo {
     method: string;
     zone: "inner_hcm" | "nationwide";
+    deliveryLabel?: string;
+    estimatedDeliveryMinDays?: number;
+    estimatedDeliveryMaxDays?: number;
     estimatedDeliveryDate: string;
     estimatedDeliveryText: string;
     fee: number;
+    feeBeforeDiscount?: number;
     freeShippingApplied: boolean;
     freeShippingThreshold: number;
 }

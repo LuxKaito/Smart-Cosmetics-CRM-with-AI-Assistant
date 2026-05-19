@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
 import {
-    fetchVietnamAddressDetail,
     fetchVietnamAddressSuggestions,
     type AddressSuggestion,
 } from "../../services/locationService";
@@ -48,9 +47,18 @@ const defaultForm: CheckoutForm = {
 };
 
 const SHIPPING_RECALCULATE_DEBOUNCE_MS = 400;
-const ADDRESS_AUTOCOMPLETE_DEBOUNCE_MS = 350;
+const MIN_ADDRESS_QUERY_LENGTH = 3;
 
 const formatCurrency = (value: number) => `${value.toLocaleString("vi-VN")} đ`;
+
+const normalizeLooseText = (value: string) =>
+    String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\u0111/g, "d")
+        .replace(/\u0110/g, "D")
+        .toLowerCase()
+        .trim();
 
 const parseAddressParts = (formattedAddress: string) => {
     const parts = String(formattedAddress || "")
@@ -58,19 +66,72 @@ const parseAddressParts = (formattedAddress: string) => {
         .map((part) => part.trim())
         .filter(Boolean);
 
-    const province = parts[parts.length - 1] || "";
-    const district = parts[parts.length - 2] || "";
-    const ward = parts[parts.length - 3] || "";
+    const countryTokens = ["viet nam", "vietnam"];
+    const cleanedParts = [...parts];
+    const lastPart = cleanedParts[cleanedParts.length - 1] || "";
+    if (countryTokens.includes(normalizeLooseText(lastPart))) {
+        cleanedParts.pop();
+    }
+
+    const province = cleanedParts[cleanedParts.length - 1] || "";
+    const district = cleanedParts[cleanedParts.length - 2] || "";
+    const ward = cleanedParts[cleanedParts.length - 3] || "";
     const addressLine =
-        parts.length > 3
-            ? parts.slice(0, Math.max(1, parts.length - 3)).join(", ")
-            : parts[0] || "";
+        cleanedParts.length > 3
+            ? cleanedParts
+                  .slice(0, Math.max(1, cleanedParts.length - 3))
+                  .join(", ")
+            : cleanedParts[0] || "";
 
     return { province, district, ward, addressLine };
 };
 
 const buildAreaText = (province: string, district: string, ward: string) =>
     [province, district, ward].filter(Boolean).join(", ");
+
+const pickFirstNonEmpty = (...values: Array<string | undefined>) =>
+    values.find((value) => String(value || "").trim())?.trim() || "";
+
+const extractAddressFromSuggestion = (suggestion: AddressSuggestion) => {
+    const address = suggestion.address || {};
+    const fallback = parseAddressParts(suggestion.displayName || "");
+
+    const province = pickFirstNonEmpty(
+        address.state,
+        address.province,
+        address.region,
+        address["state_district"],
+        fallback.province,
+    );
+    const district = pickFirstNonEmpty(
+        address.county,
+        address.city_district,
+        address.district,
+        address.city,
+        address.town,
+        fallback.district,
+    );
+    const ward = pickFirstNonEmpty(
+        address.suburb,
+        address.quarter,
+        address.neighbourhood,
+        address.village,
+        address.hamlet,
+        address.city_block,
+        fallback.ward,
+    );
+    const addressLine = pickFirstNonEmpty(
+        [address.house_number, address.road].filter(Boolean).join(" ").trim(),
+        address.building,
+        address.residential,
+        address.neighbourhood,
+        address.road,
+        suggestion.mainText,
+        fallback.addressLine,
+    );
+
+    return { province, district, ward, addressLine };
+};
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -92,6 +153,7 @@ export default function CheckoutPage() {
     );
     const [streetDropdownOpen, setStreetDropdownOpen] = useState(false);
     const [isSearchingStreet, setIsSearchingStreet] = useState(false);
+    const [streetSearchError, setStreetSearchError] = useState("");
 
     const [areaQuery, setAreaQuery] = useState("");
     const [areaSuggestions, setAreaSuggestions] = useState<AddressSuggestion[]>(
@@ -99,8 +161,9 @@ export default function CheckoutPage() {
     );
     const [areaDropdownOpen, setAreaDropdownOpen] = useState(false);
     const [isSearchingArea, setIsSearchingArea] = useState(false);
-
-    const [isResolvingAddress, setIsResolvingAddress] = useState(false);
+    const [areaSearchError, setAreaSearchError] = useState("");
+    const [selectedAddress, setSelectedAddress] =
+        useState<AddressSuggestion | null>(null);
 
     useEffect(() => {
         const user = getCurrentUser();
@@ -188,19 +251,19 @@ export default function CheckoutPage() {
             window.clearTimeout(timer);
         };
     }, [form.province, bootstrapped]);
-
     useEffect(() => {
         if (!streetDropdownOpen) return;
         const query = streetQuery.trim();
-        if (query.length < 2) {
+        if (query.length < MIN_ADDRESS_QUERY_LENGTH) {
             setStreetSuggestions([]);
             setIsSearchingStreet(false);
+            setStreetSearchError("");
             return;
         }
-
         let cancelled = false;
-        const timer = window.setTimeout(async () => {
+        void (async () => {
             setIsSearchingStreet(true);
+            setStreetSearchError("");
             try {
                 const suggestions = await fetchVietnamAddressSuggestions(query);
                 if (cancelled) return;
@@ -208,36 +271,30 @@ export default function CheckoutPage() {
             } catch (error) {
                 if (cancelled) return;
                 setStreetSuggestions([]);
-                setStatus({
-                    type: "error",
-                    message: getErrorMessage(
-                        error,
-                        "Không thể gợi ý địa chỉ lúc này.",
-                    ),
-                });
+                setStreetSearchError(
+                    getErrorMessage(error, "Có lỗi khi tìm địa chỉ"),
+                );
             } finally {
                 if (!cancelled) setIsSearchingStreet(false);
             }
-        }, ADDRESS_AUTOCOMPLETE_DEBOUNCE_MS);
-
+        })();
         return () => {
             cancelled = true;
-            window.clearTimeout(timer);
         };
     }, [streetQuery, streetDropdownOpen]);
-
     useEffect(() => {
         if (!areaDropdownOpen) return;
         const query = areaQuery.trim();
-        if (query.length < 2) {
+        if (query.length < MIN_ADDRESS_QUERY_LENGTH) {
             setAreaSuggestions([]);
             setIsSearchingArea(false);
+            setAreaSearchError("");
             return;
         }
-
         let cancelled = false;
-        const timer = window.setTimeout(async () => {
+        void (async () => {
             setIsSearchingArea(true);
+            setAreaSearchError("");
             try {
                 const suggestions = await fetchVietnamAddressSuggestions(query);
                 if (cancelled) return;
@@ -245,47 +302,37 @@ export default function CheckoutPage() {
             } catch (error) {
                 if (cancelled) return;
                 setAreaSuggestions([]);
-                setStatus({
-                    type: "error",
-                    message: getErrorMessage(
-                        error,
-                        "Không thể gợi ý Tỉnh/Phường lúc này.",
-                    ),
-                });
+                setAreaSearchError(
+                    getErrorMessage(error, "Có lỗi khi tìm địa chỉ"),
+                );
             } finally {
                 if (!cancelled) setIsSearchingArea(false);
             }
-        }, ADDRESS_AUTOCOMPLETE_DEBOUNCE_MS);
-
+        })();
         return () => {
             cancelled = true;
-            window.clearTimeout(timer);
         };
     }, [areaQuery, areaDropdownOpen]);
 
     const finalTotal = useMemo(() => {
         if (!summary) return 0;
-        if (!form.province.trim()) {
+        if (!(form.addressLine.trim() && form.province.trim())) {
             return Math.max(0, summary.subtotal - summary.discount);
         }
         return summary.total;
-    }, [summary, form.province]);
+    }, [summary, form.addressLine, form.province]);
 
-    const shippingText = useMemo(() => {
-        if (!summary) return "";
-        if (!form.province.trim()) {
-            return "Nhập địa chỉ để xem phí vận chuyển và ngày giao dự kiến.";
-        }
-        if (summary.shipping?.estimatedDeliveryText) {
-            return `${summary.shipping.estimatedDeliveryText}.`;
-        }
-        return "Đang tính lịch giao hàng.";
-    }, [summary, form.province]);
-
-    const shippingAddressPreview = useMemo(() => {
-        const parts = [form.addressLine.trim(), areaQuery.trim()].filter(Boolean);
-        return parts.join(", ");
-    }, [form.addressLine, areaQuery]);
+    const hasShippingAddress = useMemo(
+        () => Boolean(form.addressLine.trim() && form.province.trim()),
+        [form.addressLine, form.province],
+    );
+    const shippingDeliveryLabel = useMemo(() => {
+        if (!summary?.shipping) return "";
+        return (
+            summary.shipping.deliveryLabel ||
+            `Nhận từ ${summary.shipping.estimatedDeliveryMinDays || 1} - ${summary.shipping.estimatedDeliveryMaxDays || 2} ngày`
+        );
+    }, [summary]);
 
     const onChange =
         (field: keyof CheckoutForm) =>
@@ -296,17 +343,15 @@ export default function CheckoutPage() {
                 window.localStorage.setItem("checkout_note_draft", nextValue);
             }
         };
-
-    const applyAddressDetail = (
-        detail: Awaited<ReturnType<typeof fetchVietnamAddressDetail>>,
+    const applyAddressSuggestion = (
+        suggestion: AddressSuggestion,
         options?: { keepAddressLine?: boolean },
     ) => {
-        const fallback = parseAddressParts(detail.formattedAddress || "");
-        const province = detail.province || fallback.province;
-        const district = detail.district || fallback.district;
-        const ward = detail.ward || fallback.ward;
-        const addressLine = detail.addressLine || fallback.addressLine;
-
+        const detail = extractAddressFromSuggestion(suggestion);
+        const province = detail.province;
+        const district = detail.district;
+        const ward = detail.ward;
+        const addressLine = detail.addressLine;
         setForm((prev) => ({
             ...prev,
             province: province || prev.province,
@@ -316,69 +361,33 @@ export default function CheckoutPage() {
                 ? prev.addressLine
                 : addressLine || prev.addressLine,
         }));
-
         if (!options?.keepAddressLine) {
-            setStreetQuery(addressLine || "");
+            setStreetQuery(suggestion.displayName || addressLine || "");
         }
         setAreaQuery(
-            buildAreaText(province, district, ward) ||
-                detail.formattedAddress ||
-                "",
+            buildAreaText(province, district, ward) || suggestion.displayName || "",
+        );
+        setSelectedAddress(suggestion);
+    };
+    const handleStreetSuggestionSelect = (suggestion: AddressSuggestion) => {
+        applyAddressSuggestion(suggestion, { keepAddressLine: false });
+        setStreetSuggestions([]);
+        setStreetDropdownOpen(false);
+        setStreetSearchError("");
+        setStatus((prev) =>
+            prev.type === "error" ? { type: "", message: "" } : prev,
         );
     };
-
-    const handleStreetSuggestionSelect = async (suggestion: AddressSuggestion) => {
-        setIsResolvingAddress(true);
-        try {
-            const detail = await fetchVietnamAddressDetail(suggestion.placeId);
-            applyAddressDetail(detail, { keepAddressLine: false });
-            setStreetQuery(
-                detail.addressLine ||
-                    parseAddressParts(detail.formattedAddress || "").addressLine ||
-                    suggestion.mainText ||
-                    suggestion.description,
-            );
-            setStreetSuggestions([]);
-            setStreetDropdownOpen(false);
-            setStatus((prev) =>
-                prev.type === "error" ? { type: "", message: "" } : prev,
-            );
-        } catch (error) {
-            setStatus({
-                type: "error",
-                message: getErrorMessage(
-                    error,
-                    "Không lấy được chi tiết địa chỉ từ Google Maps.",
-                ),
-            });
-        } finally {
-            setIsResolvingAddress(false);
-        }
+    const handleAreaSuggestionSelect = (suggestion: AddressSuggestion) => {
+        applyAddressSuggestion(suggestion, { keepAddressLine: true });
+        setAreaQuery(suggestion.displayName || "");
+        setAreaSuggestions([]);
+        setAreaDropdownOpen(false);
+        setAreaSearchError("");
+        setStatus((prev) =>
+            prev.type === "error" ? { type: "", message: "" } : prev,
+        );
     };
-
-    const handleAreaSuggestionSelect = async (suggestion: AddressSuggestion) => {
-        setIsResolvingAddress(true);
-        try {
-            const detail = await fetchVietnamAddressDetail(suggestion.placeId);
-            applyAddressDetail(detail, { keepAddressLine: true });
-            setAreaSuggestions([]);
-            setAreaDropdownOpen(false);
-            setStatus((prev) =>
-                prev.type === "error" ? { type: "", message: "" } : prev,
-            );
-        } catch (error) {
-            setStatus({
-                type: "error",
-                message: getErrorMessage(
-                    error,
-                    "Không lấy được Tỉnh/Phường từ Google Maps.",
-                ),
-            });
-        } finally {
-            setIsResolvingAddress(false);
-        }
-    };
-
     const validateForm = () => {
         if (
             !form.fullName.trim() ||
@@ -533,6 +542,8 @@ export default function CheckoutPage() {
                                                     ...prev,
                                                     addressLine: value,
                                                 }));
+                                                setSelectedAddress(null);
+                                                setStreetSearchError("");
                                                 setStreetDropdownOpen(true);
                                             }}
                                             onFocus={() => setStreetDropdownOpen(true)}
@@ -547,15 +558,20 @@ export default function CheckoutPage() {
                                             className="h-12 w-full rounded-xl border border-[#E4D8DF] px-4 outline-none focus:border-[#F999B7]"
                                         />
                                     </Field>
-
                                     <SuggestionMenu
                                         open={streetDropdownOpen}
                                         suggestions={streetSuggestions}
                                         isSearching={isSearchingStreet}
-                                        isResolving={isResolvingAddress}
-                                        emptyMessage="Không có gợi ý địa chỉ."
-                                        searchingMessage="Đang gợi ý tên đường..."
-                                        resolvingMessage="Đang lấy chi tiết địa chỉ..."
+                                        showEmptyState={
+                                            streetQuery.trim().length >=
+                                                MIN_ADDRESS_QUERY_LENGTH &&
+                                            !isSearchingStreet &&
+                                            !streetSearchError &&
+                                            streetSuggestions.length === 0
+                                        }
+                                        emptyMessage="Không tìm thấy địa chỉ phù hợp"
+                                        searchingMessage="Đang tìm kiếm..."
+                                        errorMessage={streetSearchError}
                                         onSelect={handleStreetSuggestionSelect}
                                     />
                                 </div>
@@ -567,6 +583,8 @@ export default function CheckoutPage() {
                                             onChange={(event) => {
                                                 const value = event.target.value;
                                                 setAreaQuery(value);
+                                                setSelectedAddress(null);
+                                                setAreaSearchError("");
                                                 setAreaDropdownOpen(true);
                                                 if (!value.trim()) {
                                                     setForm((prev) => ({
@@ -589,15 +607,20 @@ export default function CheckoutPage() {
                                             className="h-12 w-full rounded-xl border border-[#E4D8DF] px-4 outline-none focus:border-[#F999B7]"
                                         />
                                     </Field>
-
                                     <SuggestionMenu
                                         open={areaDropdownOpen}
                                         suggestions={areaSuggestions}
                                         isSearching={isSearchingArea}
-                                        isResolving={isResolvingAddress}
-                                        emptyMessage="Không có gợi ý Tỉnh/Phường."
-                                        searchingMessage="Đang gợi ý Tỉnh/TP, Phường/Xã..."
-                                        resolvingMessage="Đang lấy khu vực..."
+                                        showEmptyState={
+                                            areaQuery.trim().length >=
+                                                MIN_ADDRESS_QUERY_LENGTH &&
+                                            !isSearchingArea &&
+                                            !areaSearchError &&
+                                            areaSuggestions.length === 0
+                                        }
+                                        emptyMessage="Không tìm thấy địa chỉ phù hợp"
+                                        searchingMessage="Đang tìm kiếm..."
+                                        errorMessage={areaSearchError}
                                         onSelect={handleAreaSuggestionSelect}
                                     />
                                 </div>
@@ -606,30 +629,58 @@ export default function CheckoutPage() {
 
                         <article className="rounded-[24px] border border-[#ECDDE4] bg-white p-5 shadow-[0_10px_30px_rgba(249,153,183,0.12)] md:p-6">
                             <h3 className="text-2xl font-bold">Phương thức giao hàng</h3>
-                            <input
-                                value={shippingAddressPreview}
-                                readOnly
-                                placeholder="Nhập địa chỉ để xem các phương thức giao hàng"
-                                className="mt-4 h-12 w-full rounded-xl border border-[#E4D8DF] bg-[#FAF7F9] px-4 text-[#594853] outline-none"
-                            />
-                            <p className="mt-3 text-sm text-[#7A6A70]">{shippingText}</p>
-                            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-                                <span className="rounded-full border border-[#ECDDE4] bg-white px-3 py-1">
-                                    {summary?.shipping?.method || "Giao hàng tiêu chuẩn"}
-                                </span>
-                                <span className="rounded-full border border-[#ECDDE4] bg-white px-3 py-1">
-                                    {form.province.trim()
-                                        ? summary?.shippingFee === 0
-                                            ? "Miễn phí ship"
-                                            : `Phí ship: ${formatCurrency(summary?.shippingFee || 0)}`
-                                        : "Chưa tính phí ship"}
-                                </span>
-                                {isEstimatingShipping ? (
-                                    <span className="text-[#7A6A70]">
-                                        Đang cập nhật phí vận chuyển...
-                                    </span>
-                                ) : null}
-                            </div>
+                            {!hasShippingAddress ? (
+                                <p className="mt-4 text-sm text-[#7A6A70]">
+                                    Nhập địa chỉ để hiển thị phí và thời gian giao hàng.
+                                </p>
+                            ) : null}
+
+                            {hasShippingAddress && summary?.shipping ? (
+                                <div className="mt-4 rounded-2xl border border-[#F1B5C9] px-4 py-4">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#E7A2B8]">
+                                                <span className="h-2.5 w-2.5 rounded-full bg-[#E7A2B8]" />
+                                            </span>
+                                            <div>
+                                                <p className="font-semibold text-[#2B1B24]">
+                                                    {shippingDeliveryLabel || "Nhận từ 1 - 2 ngày"}
+                                                </p>
+                                                <p className="text-xs text-[#7A6A70]">
+                                                    {summary.shipping.method ||
+                                                        "Giao hàng tiêu chuẩn"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <strong className="text-2xl text-[#2B1B24]">
+                                            {summary.shippingFee === 0
+                                                ? "Miễn phí"
+                                                : formatCurrency(summary.shippingFee)}
+                                        </strong>
+                                    </div>
+
+                                    {summary.shipping.freeShippingApplied ? (
+                                        <p className="mt-2 text-xs text-[#2b9f6a]">
+                                            Đơn hàng từ{" "}
+                                            {formatCurrency(
+                                                summary.shipping.freeShippingThreshold,
+                                            )}{" "}
+                                            được miễn phí vận chuyển.
+                                        </p>
+                                    ) : null}
+                                    {selectedAddress?.displayName ? (
+                                        <p className="mt-2 text-xs text-[#7A6A70]">
+                                            Địa chỉ đã chọn: {selectedAddress.displayName}
+                                        </p>
+                                    ) : null}
+                                </div>
+                            ) : null}
+
+                            {isEstimatingShipping ? (
+                                <p className="mt-3 text-sm text-[#7A6A70]">
+                                    Đang cập nhật phí vận chuyển...
+                                </p>
+                            ) : null}
                         </article>
 
                         <article className="rounded-[24px] border border-[#ECDDE4] bg-white p-5 shadow-[0_10px_30px_rgba(249,153,183,0.12)] md:p-6">
@@ -719,7 +770,7 @@ export default function CheckoutPage() {
                                     <div className="flex justify-between">
                                         <span className="text-[#7A6A70]">Vận chuyển</span>
                                         <strong>
-                                            {form.province.trim()
+                                            {hasShippingAddress
                                                 ? summary.shippingFee === 0
                                                     ? "Miễn phí"
                                                     : formatCurrency(summary.shippingFee)
@@ -776,24 +827,24 @@ function SuggestionMenu({
     open,
     suggestions,
     isSearching,
-    isResolving,
+    showEmptyState,
     emptyMessage,
     searchingMessage,
-    resolvingMessage,
+    errorMessage,
     onSelect,
 }: {
     open: boolean;
     suggestions: AddressSuggestion[];
     isSearching: boolean;
-    isResolving: boolean;
+    showEmptyState: boolean;
     emptyMessage: string;
     searchingMessage: string;
-    resolvingMessage: string;
+    errorMessage: string;
     onSelect: (suggestion: AddressSuggestion) => void;
 }) {
     if (!open) return null;
-    if (!isSearching && !isResolving && suggestions.length === 0) return null;
-
+    if (!isSearching && !errorMessage && !showEmptyState && suggestions.length === 0)
+        return null;
     return (
         <div className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-[#F1CFDB] bg-white shadow-[0_10px_24px_rgba(249,153,183,0.18)]">
             {isSearching ? (
@@ -801,16 +852,16 @@ function SuggestionMenu({
                     {searchingMessage}
                 </p>
             ) : null}
-            {isResolving ? (
+            {!isSearching && errorMessage ? (
                 <p className="px-4 py-3 text-sm text-[#7A6A70]">
-                    {resolvingMessage}
+                    {errorMessage}
                 </p>
             ) : null}
-            {!isSearching && !isResolving && suggestions.length === 0 ? (
+            {!isSearching && !errorMessage && showEmptyState ? (
                 <p className="px-4 py-3 text-sm text-[#7A6A70]">{emptyMessage}</p>
             ) : null}
             {!isSearching &&
-                !isResolving &&
+                !errorMessage &&
                 suggestions.map((suggestion) => (
                     <button
                         key={suggestion.placeId}
@@ -819,7 +870,7 @@ function SuggestionMenu({
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => onSelect(suggestion)}>
                         <p className="text-sm font-semibold text-[#2B1B24]">
-                            {suggestion.mainText || suggestion.description}
+                            {suggestion.mainText || suggestion.displayName}
                         </p>
                         {suggestion.secondaryText ? (
                             <p className="text-xs text-[#7A6A70]">
@@ -831,3 +882,4 @@ function SuggestionMenu({
         </div>
     );
 }
+

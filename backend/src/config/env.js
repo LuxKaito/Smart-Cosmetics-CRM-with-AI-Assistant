@@ -25,7 +25,6 @@ const env = {
   guestCartTtlDays: Number(process.env.GUEST_CART_TTL_DAYS || 30),
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-  googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
   payosClientId: process.env.PAYOS_CLIENT_ID || '',
   payosApiKey: process.env.PAYOS_API_KEY || '',
   payosChecksumKey: process.env.PAYOS_CHECKSUM_KEY || '',

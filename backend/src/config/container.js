@@ -5,7 +5,6 @@ const MongoOrderRepository = require('../infrastructure/database/repositories/Mo
 const RabbitMQClient = require('../infrastructure/messaging/RabbitMQClient');
 const EventPublisher = require('../infrastructure/messaging/EventPublisher');
 const GoogleOAuthClient = require('../infrastructure/oauth/GoogleOAuthClient');
-const GoogleMapsClient = require('../infrastructure/maps/GoogleMapsClient');
 const PayOSClient = require('../infrastructure/payments/PayOSClient');
 const PasswordService = require('../application/services/PasswordService');
 const TokenService = require('../application/services/TokenService');
@@ -16,7 +15,6 @@ const CheckoutService = require('../application/services/CheckoutService');
 const OrderService = require('../application/services/OrderService');
 const PaymentService = require('../application/services/PaymentService');
 const AdminService = require('../application/services/AdminService');
-const AddressLookupService = require('../application/services/AddressLookupService');
 const AuthController = require('../presentation/controllers/AuthController');
 const ProductController = require('../presentation/controllers/ProductController');
 const CartController = require('../presentation/controllers/CartController');
@@ -36,7 +34,6 @@ const buildContainer = () => {
   const passwordService = new PasswordService();
   const tokenService = new TokenService();
   const googleOAuthClient = new GoogleOAuthClient();
-  const googleMapsClient = new GoogleMapsClient();
   const payosClient = new PayOSClient();
   const cartService = new CartService({ cartRepository, productRepository, eventPublisher });
   const checkoutService = new CheckoutService({ cartRepository, productRepository });
@@ -49,7 +46,6 @@ const buildContainer = () => {
     eventPublisher
   });
   const paymentService = new PaymentService({ orderService, payosClient });
-  const addressLookupService = new AddressLookupService({ googleMapsClient });
 
   const authService = new AuthService({
     userRepository,
@@ -72,7 +68,6 @@ const buildContainer = () => {
     passwordService,
     tokenService,
     googleOAuthClient,
-    googleMapsClient,
     payosClient,
     authService,
     productService,
@@ -80,13 +75,12 @@ const buildContainer = () => {
     checkoutService,
     orderService,
     paymentService,
-    addressLookupService,
     adminService,
     authController: new AuthController(authService),
     productController: new ProductController(productService),
     cartController: new CartController(cartService),
     adminController: new AdminController(adminService),
-    checkoutController: new CheckoutController(checkoutService, addressLookupService),
+    checkoutController: new CheckoutController(checkoutService),
     orderController: new OrderController(orderService),
     paymentController: new PaymentController(paymentService)
   };
