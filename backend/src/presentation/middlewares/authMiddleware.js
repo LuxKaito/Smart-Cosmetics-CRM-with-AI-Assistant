@@ -1,0 +1,83 @@
+const AppError = require('../../shared/errors/AppError');
+const ROLES = require('../../shared/constants/roles');
+
+const verifyJWT = (tokenService, userRepository) => async (req, res, next) => {
+  const authHeader = req.headers.authorization || '';
+  const [, token] = authHeader.split(' ');
+
+  if (!token) return next(new AppError('Authentication required', 401, 'AUTH_REQUIRED'));
+
+  try {
+    const payload = tokenService.verifyAccessToken(token);
+    const user = await userRepository.findById(payload.sub);
+    if (!user) return next(new AppError('User not found', 401, 'USER_NOT_FOUND'));
+    if (user.isBlocked) return next(new AppError('User account is blocked', 403, 'USER_BLOCKED'));
+
+    req.user = user;
+    return next();
+  } catch (error) {
+    return next(new AppError('Invalid or expired token', 401, 'INVALID_TOKEN'));
+  }
+};
+
+const optionalAuth = (tokenService, userRepository) => async (req, res, next) => {
+  const authHeader = req.headers.authorization || '';
+  const [, token] = authHeader.split(' ');
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const payload = tokenService.verifyAccessToken(token);
+    const user = await userRepository.findById(payload.sub);
+    if (!user) return next(new AppError('User not found', 401, 'USER_NOT_FOUND'));
+    if (user.isBlocked) return next(new AppError('User account is blocked', 403, 'USER_BLOCKED'));
+
+    req.user = user;
+    return next();
+  } catch (error) {
+    return next(new AppError('Invalid or expired token', 401, 'INVALID_TOKEN'));
+  }
+};
+
+const protectRoute = (tokenService, userRepository) => verifyJWT(tokenService, userRepository);
+
+const checkRole = (...roles) => (req, res, next) => {
+  if (!req.user || !roles.includes(req.user.role)) {
+    return next(new AppError('Permission denied', 403, 'FORBIDDEN'));
+  }
+  return next();
+};
+
+const checkPermission = (...permissions) => (req, res, next) => {
+  if (!req.user) return next(new AppError('Authentication required', 401, 'AUTH_REQUIRED'));
+  if (req.user.role === ROLES.ADMIN) return next();
+
+  const permissionSet = new Set(req.user.permissions || []);
+  const allowed = permissions.some((permission) => permissionSet.has(permission));
+
+  if (!allowed) {
+    return next(new AppError('Permission denied', 403, 'FORBIDDEN'));
+  }
+
+  return next();
+};
+
+const authorize = ({ roles = [], permissions = [] } = {}) => (req, res, next) => {
+  if (!req.user) return next(new AppError('Authentication required', 401, 'AUTH_REQUIRED'));
+  if (roles.length && roles.includes(req.user.role)) return next();
+  if (!permissions.length) return next(new AppError('Permission denied', 403, 'FORBIDDEN'));
+
+  return checkPermission(...permissions)(req, res, next);
+};
+
+module.exports = {
+  verifyJWT,
+  optionalAuth,
+  protectRoute,
+  checkRole,
+  checkPermission,
+  authorize
+};
