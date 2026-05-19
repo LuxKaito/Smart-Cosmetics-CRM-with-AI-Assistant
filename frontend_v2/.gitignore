@@ -1,0 +1,35 @@
+# dependencies
+node_modules
+
+# nextjs build
+.next
+out
+build
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# typescript
+*.tsbuildinfo
+
+# vscode
+.vscode
+
+# macos
+.DS_Store
+
+# uploads/cache
+uploads
+tmp
+temp
+cache

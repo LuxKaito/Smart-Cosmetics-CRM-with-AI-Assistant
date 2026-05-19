@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    color-scheme: light;
+    --lux-pink-light: #ffd4e1;
+    --lux-pink-main: #f999b7;
+    --lux-white: #ffffff;
+    --lux-cream: #fff7fa;
+    --lux-text: #2b1b24;
+    --lux-muted: #7a6a70;
+}
+
+html,
+body {
+    min-height: 100%;
+    background: var(--lux-cream);
+    color: var(--lux-text);
+}
