@@ -8,27 +8,50 @@ class PayOSClient {
     this.apiKey = env.payosApiKey;
     this.checksumKey = env.payosChecksumKey;
     this.baseUrl = env.payosBaseUrl.replace(/\/+$/, '');
+    this.payos = null;
+    this.sdkLoadError = null;
+
+    if (this.isConfigured()) {
+      this.initializeSdkClient();
+    }
   }
 
   isConfigured() {
     return Boolean(this.clientId && this.apiKey && this.checksumKey);
   }
 
-  async createPaymentLink(payload) {
-    const body = {
-      orderCode: Number(payload.orderCode),
-      amount: Math.round(Number(payload.amount || 0)),
-      description: String(payload.description || '').slice(0, 255),
-      cancelUrl: payload.cancelUrl || env.payosCancelUrl,
-      returnUrl: payload.returnUrl || env.payosReturnUrl,
-      items: (payload.items || []).map((item) => ({
-        name: String(item.name || '').slice(0, 80),
-        quantity: Number(item.quantity || 1),
-        price: Math.round(Number(item.price || 0))
-      }))
-    };
+  initializeSdkClient() {
+    try {
+      const { PayOS } = require('@payos/node');
+      this.payos = new PayOS({
+        clientId: this.clientId,
+        apiKey: this.apiKey,
+        checksumKey: this.checksumKey,
+        baseURL: this.baseUrl
+      });
+    } catch (error) {
+      this.sdkLoadError = error;
+      this.payos = null;
+    }
+  }
 
-    body.signature = this.sign(body);
+  ensureSdkAvailable() {
+    if (this.payos) return;
+
+    if (this.sdkLoadError) {
+      throw new AppError(
+        'payOS SDK is unavailable. Please install @payos/node and restart backend.',
+        500,
+        'PAYOS_SDK_UNAVAILABLE',
+        { reason: this.sdkLoadError.message }
+      );
+    }
+
+    throw new AppError('payOS SDK is not initialized', 500, 'PAYOS_SDK_UNAVAILABLE');
+  }
+
+  async createPaymentLink(payload) {
+    const body = buildPaymentPayload(payload);
 
     if (!this.isConfigured()) {
       return {
@@ -42,79 +65,87 @@ class PayOSClient {
       };
     }
 
-    const response = await fetch(`${this.baseUrl}/v2/payment-requests`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-client-id': this.clientId,
-        'x-api-key': this.apiKey
-      },
-      body: JSON.stringify(body)
-    });
+    this.ensureSdkAvailable();
 
-    const result = await parseJsonSafe(response);
-    if (!response.ok || !result?.data?.checkoutUrl) {
-      throw new AppError(
-        result?.desc || result?.message || 'Failed to create payOS payment link',
-        502,
-        'PAYOS_CREATE_LINK_FAILED',
-        result || null
-      );
+    try {
+      const result = await this.payos.paymentRequests.create(body);
+      if (!result?.checkoutUrl) {
+        throw new AppError('Failed to create payOS payment link', 502, 'PAYOS_CREATE_LINK_FAILED');
+      }
+
+      return {
+        checkoutUrl: result.checkoutUrl,
+        paymentLinkId: result.paymentLinkId || '',
+        payosOrderCode: Number(result.orderCode || body.orderCode),
+        raw: result
+      };
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw normalizePayOSError(error, 'Failed to create payOS payment link', 'PAYOS_CREATE_LINK_FAILED');
     }
-
-    return {
-      checkoutUrl: result.data.checkoutUrl,
-      paymentLinkId: result.data.paymentLinkId || '',
-      payosOrderCode: Number(result.data.orderCode || body.orderCode),
-      raw: result
-    };
   }
 
-  verifyWebhookSignature(payload = {}) {
+  async verifyWebhookSignature(payload = {}) {
     if (!this.isConfigured()) return true;
+    this.ensureSdkAvailable();
 
-    const incomingSignature = payload.signature || payload.data?.signature || '';
-    if (!incomingSignature) return false;
-
-    const data = payload.data || payload;
-    const localSignature = this.sign(data);
-    return safeCompare(incomingSignature, localSignature);
-  }
-
-  sign(data = {}) {
-    if (!this.checksumKey) return '';
-    const canonical = canonicalize(data);
-    return require('crypto').createHmac('sha256', this.checksumKey).update(canonical).digest('hex');
+    try {
+      await this.payos.webhooks.verify(payload);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }
 
-const canonicalize = (data) =>
-  Object.keys(data)
-    .filter((key) => key !== 'signature' && data[key] !== undefined && data[key] !== null)
-    .sort()
-    .map((key) => `${key}=${stringifyValue(data[key])}`)
-    .join('&');
+const buildPaymentPayload = (payload = {}) => {
+  const orderCode = Number(payload.orderCode);
+  const amount = Math.round(Number(payload.amount || 0));
+  const description = String(payload.description || '').trim().slice(0, 255);
+  const returnUrl = String(payload.returnUrl || env.payosReturnUrl || '').trim();
+  const cancelUrl = String(payload.cancelUrl || env.payosCancelUrl || '').trim();
+  const items = (payload.items || [])
+    .map((item) => ({
+      name: String(item?.name || '').trim().slice(0, 80),
+      quantity: Number(item?.quantity || 0),
+      price: Math.round(Number(item?.price || 0))
+    }))
+    .filter((item) => item.name && item.quantity > 0 && item.price >= 0);
 
-const stringifyValue = (value) => {
-  if (Array.isArray(value)) return JSON.stringify(value);
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
-};
-
-const safeCompare = (a, b) => {
-  try {
-    return require('crypto').timingSafeEqual(Buffer.from(String(a)), Buffer.from(String(b)));
-  } catch (error) {
-    return false;
+  if (!Number.isInteger(orderCode) || orderCode <= 0) {
+    throw new AppError('Invalid payOS orderCode', 400, 'PAYOS_ORDER_CODE_INVALID');
   }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new AppError('Invalid payOS amount', 400, 'PAYOS_AMOUNT_INVALID');
+  }
+  if (!description) {
+    throw new AppError('Invalid payOS description', 400, 'PAYOS_DESCRIPTION_INVALID');
+  }
+  if (!returnUrl || !cancelUrl) {
+    throw new AppError('Missing payOS return/cancel URL', 500, 'PAYOS_CALLBACK_URL_MISSING');
+  }
+
+  return {
+    orderCode,
+    amount,
+    description,
+    returnUrl,
+    cancelUrl,
+    items
+  };
 };
 
-const parseJsonSafe = async (response) => {
-  try {
-    return await response.json();
-  } catch (error) {
-    return null;
-  }
-};
+const normalizePayOSError = (error, fallbackMessage, code) =>
+  new AppError(
+    error?.desc || error?.message || fallbackMessage,
+    Number.isInteger(error?.status) ? error.status : 502,
+    code,
+    {
+      name: error?.name || 'PayOSError',
+      status: error?.status || null,
+      code: error?.code || null,
+      desc: error?.desc || null
+    }
+  );
 
 module.exports = PayOSClient;

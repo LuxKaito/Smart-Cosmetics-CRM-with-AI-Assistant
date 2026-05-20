@@ -12,7 +12,8 @@ class PaymentService {
   }
 
   async handlePayOSWebhook(body) {
-    if (!this.payosClient.verifyWebhookSignature(body)) {
+    const isValidSignature = await this.payosClient.verifyWebhookSignature(body);
+    if (!isValidSignature) {
       throw new AppError('Invalid payOS webhook signature', 400, 'PAYOS_INVALID_SIGNATURE');
     }
 
