@@ -24,7 +24,7 @@ const googleLoginSchema = Joi.object({
 });
 
 const refreshTokenSchema = Joi.object({
-  refreshToken: Joi.string().required()
+  refreshToken: Joi.string().optional()
 });
 
 const changePasswordSchema = Joi.object({

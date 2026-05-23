@@ -1,9 +1,19 @@
 const AppError = require('../../shared/errors/AppError');
 const ROLES = require('../../shared/constants/roles');
+const env = require('../../config/env');
+const { parseCookies } = require('../../shared/utils/cookies');
+
+const resolveAccessToken = (req) => {
+  const authHeader = req.headers.authorization || '';
+  const [, bearerToken] = authHeader.split(' ');
+  if (bearerToken) return bearerToken;
+
+  const cookies = parseCookies(req.headers.cookie || '');
+  return cookies[env.authAccessCookieName] || null;
+};
 
 const verifyJWT = (tokenService, userRepository) => async (req, res, next) => {
-  const authHeader = req.headers.authorization || '';
-  const [, token] = authHeader.split(' ');
+  const token = resolveAccessToken(req);
 
   if (!token) return next(new AppError('Authentication required', 401, 'AUTH_REQUIRED'));
 
@@ -21,8 +31,7 @@ const verifyJWT = (tokenService, userRepository) => async (req, res, next) => {
 };
 
 const optionalAuth = (tokenService, userRepository) => async (req, res, next) => {
-  const authHeader = req.headers.authorization || '';
-  const [, token] = authHeader.split(' ');
+  const token = resolveAccessToken(req);
 
   if (!token) {
     req.user = null;

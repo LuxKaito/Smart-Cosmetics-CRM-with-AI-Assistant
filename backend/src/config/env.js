@@ -20,6 +20,8 @@ const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret_change_me',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  authAccessCookieName: process.env.AUTH_ACCESS_COOKIE_NAME || 'access_token',
+  authRefreshCookieName: process.env.AUTH_REFRESH_COOKIE_NAME || 'refresh_token',
   emailVerificationTokenTtlMinutes: Number(process.env.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES || 60),
   guestCartCookieName: process.env.GUEST_CART_COOKIE_NAME || 'cart_token',
   guestCartTtlDays: Number(process.env.GUEST_CART_TTL_DAYS || 30),

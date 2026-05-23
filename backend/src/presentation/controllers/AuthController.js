@@ -1,6 +1,7 @@
 const { success } = require('../../shared/utils/apiResponse');
 const env = require('../../config/env');
 const { parseCookies } = require('../../shared/utils/cookies');
+const AppError = require('../../shared/errors/AppError');
 
 class AuthController {
   constructor(authService) {
@@ -20,9 +21,10 @@ class AuthController {
   login = async (req, res) => {
     const guestCartToken = this.getGuestCartToken(req);
     const result = await this.authService.login(req.body, { guestCartToken });
+    this.setAuthCookies(res, result?.tokens);
     this.clearGuestCartCookieIfMerged(res, result);
 
-    return success(res, result, 'Login successfully');
+    return success(res, sanitizeAuthPayload(result), 'Login successfully');
   };
 
   verifyEmail = async (req, res) => {
@@ -38,17 +40,25 @@ class AuthController {
   googleLogin = async (req, res) => {
     const guestCartToken = this.getGuestCartToken(req);
     const result = await this.authService.googleLogin(req.body, { guestCartToken });
+    this.setAuthCookies(res, result?.tokens);
     this.clearGuestCartCookieIfMerged(res, result);
-    return success(res, result, 'Google login successfully');
+    return success(res, sanitizeAuthPayload(result), 'Google login successfully');
   };
 
   refresh = async (req, res) => {
-    const result = await this.authService.refresh(req.body.refreshToken);
-    return success(res, result, 'Token refreshed');
+    const refreshToken = req.body.refreshToken || this.getRefreshToken(req);
+    if (!refreshToken) {
+      throw new AppError('Refresh token required', 401, 'REFRESH_TOKEN_REQUIRED');
+    }
+
+    const result = await this.authService.refresh(refreshToken);
+    this.setAuthCookies(res, result?.tokens);
+    return success(res, sanitizeAuthPayload(result), 'Token refreshed');
   };
 
   logout = async (req, res) => {
     const result = await this.authService.logout(req.user._id);
+    this.clearAuthCookies(res);
     return success(res, result, 'Logout successfully');
   };
 
@@ -67,8 +77,44 @@ class AuthController {
   };
 
   getGuestCartToken(req) {
-    const cookies = parseCookies(req.headers.cookie);
+    const cookies = parseCookies(req.headers.cookie || '');
     return cookies[env.guestCartCookieName];
+  }
+
+  getRefreshToken(req) {
+    const cookies = parseCookies(req.headers.cookie || '');
+    return cookies[env.authRefreshCookieName];
+  }
+
+  setAuthCookies(res, tokens) {
+    if (!tokens?.accessToken || !tokens?.refreshToken) return;
+
+    const commonCookieOptions = {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: env.nodeEnv === 'production',
+      path: '/'
+    };
+
+    res.cookie(env.authAccessCookieName, tokens.accessToken, {
+      ...commonCookieOptions,
+      maxAge: parseDurationMs(env.jwtExpiresIn)
+    });
+    res.cookie(env.authRefreshCookieName, tokens.refreshToken, {
+      ...commonCookieOptions,
+      maxAge: parseDurationMs(env.jwtRefreshExpiresIn)
+    });
+  }
+
+  clearAuthCookies(res) {
+    const commonCookieOptions = {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: env.nodeEnv === 'production',
+      path: '/'
+    };
+    res.clearCookie(env.authAccessCookieName, commonCookieOptions);
+    res.clearCookie(env.authRefreshCookieName, commonCookieOptions);
   }
 
   clearGuestCartCookieIfMerged(res, result) {
@@ -81,5 +127,29 @@ class AuthController {
     });
   }
 }
+
+const sanitizeAuthPayload = (result = {}) => {
+  const { tokens, ...safe } = result || {};
+  return safe;
+};
+
+const parseDurationMs = (value) => {
+  const normalized = String(value || '').trim();
+  const matched = normalized.match(/^(\d+)(ms|s|m|h|d)?$/i);
+  if (!matched) return undefined;
+
+  const amount = Number(matched[1]);
+  const unit = String(matched[2] || 'ms').toLowerCase();
+  const multipliers = {
+    ms: 1,
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000
+  };
+
+  const factor = multipliers[unit] || 1;
+  return amount * factor;
+};
 
 module.exports = AuthController;
