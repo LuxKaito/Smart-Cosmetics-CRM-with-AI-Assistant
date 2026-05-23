@@ -14,6 +14,7 @@ interface CartState {
     hydrated: boolean;
     isHydrating: boolean;
     hydrate: () => void;
+    refresh: () => Promise<void>;
     syncFromCache: () => void;
     setItems: (items: CartItem[]) => void;
     addItem: (item: CartItem) => Promise<void>;
@@ -28,22 +29,27 @@ export const useCartStore = create<CartState>((set, get) => ({
     isHydrating: false,
     hydrate: () => {
         if (get().hydrated || get().isHydrating) return;
+        void get().refresh();
+    },
+    refresh: async () => {
+        if (get().isHydrating) return;
         set({ isHydrating: true });
-        void fetchCart()
-            .then((items) => set({ items, hydrated: true, isHydrating: false }))
-            .catch(() =>
-                set({
-                    items: getCartItems(),
-                    hydrated: true,
-                    isHydrating: false,
-                }),
-            );
+        try {
+            const items = await fetchCart();
+            set({ items, hydrated: true, isHydrating: false });
+        } catch {
+            set({
+                items: getCartItems(),
+                hydrated: true,
+                isHydrating: false,
+            });
+        }
     },
     syncFromCache: () => {
         set({ items: getCartItems(), hydrated: true });
     },
     setItems: (items) => {
-        set({ items });
+        set({ items, hydrated: true });
     },
     addItem: async (item) => {
         const items = await addCartItem(item.productId, item.quantity || 1);

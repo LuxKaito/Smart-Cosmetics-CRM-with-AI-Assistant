@@ -15,8 +15,8 @@ import {
     loginUser,
     resendVerificationEmail,
 } from "../../services/authService";
-import { mergeGuestCartApi } from "../../services/cartService";
 import { getErrorMessage } from "../../lib/errors";
+import { useCartStore } from "../../stores/cartStore";
 
 const loginSchema = z.object({
     email: z.string().email("Email không hợp lệ."),
@@ -25,6 +25,7 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
     const router = useRouter();
+    const refreshCart = useCartStore((state) => state.refresh);
     const [redirect, setRedirect] = useState("/");
     const [status, setStatus] = useState<{
         type: "" | "error" | "success";
@@ -52,7 +53,12 @@ export default function LoginPage() {
         setRedirect(redirectParam);
     }, []);
 
+    useEffect(() => {
+        router.prefetch(redirect || "/");
+    }, [redirect, router]);
+
     const handleGoogleSuccess = async () => {
+        await refreshCart();
         router.replace(redirect);
     };
 
@@ -65,13 +71,8 @@ export default function LoginPage() {
                 password: values.password,
             });
 
-            try {
-                await mergeGuestCartApi();
-            } catch {
-                // merge best-effort to avoid blocking login flow
-            }
-
             toast.success(result?.message || "Đăng nhập thành công.");
+            await refreshCart();
             router.push(redirect);
         } catch (error) {
             const message = getErrorMessage(error, "Đăng nhập thất bại.");

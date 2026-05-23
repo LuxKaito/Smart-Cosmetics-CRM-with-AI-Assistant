@@ -51,6 +51,11 @@ export default function CartPage() {
         };
     }, []);
 
+    useEffect(() => {
+        router.prefetch("/checkout");
+        router.prefetch("/login");
+    }, [router]);
+
     const pricing = useMemo(() => {
         const originalSubtotal = items.reduce((sum, item) => {
             const basePrice = Number(item.originalPrice ?? item.price ?? 0);

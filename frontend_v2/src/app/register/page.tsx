@@ -13,6 +13,7 @@ import Footer from "../../components/layout/Footer";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 import { registerUser } from "../../services/authService";
 import { getErrorMessage } from "../../lib/errors";
+import { useCartStore } from "../../stores/cartStore";
 
 const registerSchema = z
     .object({
@@ -28,6 +29,7 @@ const registerSchema = z
 
 export default function RegisterPage() {
     const router = useRouter();
+    const refreshCart = useCartStore((state) => state.refresh);
     const [redirect, setRedirect] = useState("/");
     const [statusMessage, setStatusMessage] = useState("");
     const [isRegistered, setIsRegistered] = useState(false);
@@ -76,6 +78,7 @@ export default function RegisterPage() {
     };
 
     const handleGoogleSuccess = async () => {
+        await refreshCart();
         router.push(redirect);
     };
 

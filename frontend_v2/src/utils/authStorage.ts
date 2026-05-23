@@ -1,55 +1,61 @@
 import type { AuthTokens, User } from "../types/auth";
 
-const TOKEN_KEY = "authTokens";
+let tokenCache: AuthTokens | null = null;
+let userCache: User | null = null;
 const USER_KEY = "user";
+const LEGACY_TOKEN_KEY = "authTokens";
+
+const emitAuthChange = () => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new Event("auth-change"));
+};
 
 export function getStoredTokens(): AuthTokens | null {
-    if (typeof window === "undefined") return null;
-    try {
-        return JSON.parse(
-            window.localStorage.getItem(TOKEN_KEY) || "null",
-        ) as AuthTokens | null;
-    } catch {
-        return null;
+    if (typeof window !== "undefined") {
+        window.localStorage.removeItem(LEGACY_TOKEN_KEY);
     }
+    return tokenCache;
 }
 
 export function setStoredTokens(tokens: AuthTokens | null): void {
-    if (typeof window === "undefined") return;
-    if (!tokens) {
-        window.localStorage.removeItem(TOKEN_KEY);
-    } else {
-        window.localStorage.setItem(TOKEN_KEY, JSON.stringify(tokens));
-    }
-    window.dispatchEvent(new Event("auth-change"));
+    tokenCache = tokens || null;
+    emitAuthChange();
 }
 
 export function getStoredUser(): User | null {
+    if (userCache) return userCache;
     if (typeof window === "undefined") return null;
     try {
-        return JSON.parse(
+        userCache = JSON.parse(
             window.localStorage.getItem(USER_KEY) || "null",
         ) as User | null;
     } catch {
-        return null;
+        userCache = null;
     }
+    return userCache;
 }
 
 export function setStoredUser(user: User | null): void {
-    if (typeof window === "undefined") return;
-    if (!user) {
-        window.localStorage.removeItem(USER_KEY);
-    } else {
-        window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+    userCache = user || null;
+    if (typeof window !== "undefined") {
+        window.localStorage.removeItem(LEGACY_TOKEN_KEY);
+        if (!userCache) {
+            window.localStorage.removeItem(USER_KEY);
+        } else {
+            window.localStorage.setItem(USER_KEY, JSON.stringify(userCache));
+        }
     }
-    window.dispatchEvent(new Event("auth-change"));
+    emitAuthChange();
 }
 
 export function clearAuthStorage(): void {
-    if (typeof window === "undefined") return;
-    window.localStorage.removeItem(TOKEN_KEY);
-    window.localStorage.removeItem(USER_KEY);
-    window.dispatchEvent(new Event("auth-change"));
+    tokenCache = null;
+    userCache = null;
+    if (typeof window !== "undefined") {
+        window.localStorage.removeItem(LEGACY_TOKEN_KEY);
+        window.localStorage.removeItem(USER_KEY);
+    }
+    emitAuthChange();
 }
 
 export function getAccessToken(): string | undefined {

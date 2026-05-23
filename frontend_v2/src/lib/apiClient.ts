@@ -2,12 +2,8 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 import { API_PREFIX } from "./config";
 import { ApiError } from "./errors";
 import type { ApiResponse } from "../types/api";
-import type { AuthTokens } from "../types/auth";
 import {
     clearAuthStorage,
-    getAccessToken,
-    getRefreshToken,
-    setStoredTokens,
     setStoredUser,
 } from "../utils/authStorage";
 import { useAuthStore } from "../stores/authStore";
@@ -28,20 +24,12 @@ const refreshClient: AxiosInstance = axios.create({
     },
 });
 
-let refreshPromise: Promise<AuthTokens | null> | null = null;
+let refreshPromise: Promise<boolean> | null = null;
 
-async function refreshAccessToken(): Promise<AuthTokens | null> {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) return null;
-
+async function refreshAccessToken(): Promise<boolean> {
     if (!refreshPromise) {
         refreshPromise = refreshClient
-            .post<ApiResponse<{ tokens: AuthTokens; user?: unknown }>>(
-                "/auth/refresh",
-                {
-                    refreshToken,
-                },
-            )
+            .post<ApiResponse<{ user?: unknown }>>("/auth/refresh", {})
             .then((response) => {
                 if (!response.data?.success) {
                     throw new ApiError(
@@ -51,20 +39,16 @@ async function refreshAccessToken(): Promise<AuthTokens | null> {
                     );
                 }
                 const data = response.data.data;
-                if (data?.tokens) {
-                    setStoredTokens(data.tokens);
-                    useAuthStore.getState().setTokens(data.tokens);
-                }
                 if (data?.user) {
                     setStoredUser(data.user as never);
                     useAuthStore.getState().setUser(data.user as never);
                 }
-                return data?.tokens || null;
+                return true;
             })
             .catch(() => {
                 clearAuthStorage();
                 useAuthStore.getState().clear();
-                return null;
+                return false;
             })
             .finally(() => {
                 refreshPromise = null;
@@ -73,17 +57,6 @@ async function refreshAccessToken(): Promise<AuthTokens | null> {
 
     return refreshPromise;
 }
-
-apiClient.interceptors.request.use((config) => {
-    const token = getAccessToken();
-    if (token) {
-        config.headers = {
-            ...config.headers,
-            Authorization: `Bearer ${token}`,
-        } as any;
-    }
-    return config;
-});
 
 apiClient.interceptors.response.use(
     (response) => response,
@@ -96,11 +69,7 @@ apiClient.interceptors.response.use(
         if (status === 401 && original && !original._retry) {
             original._retry = true;
             const refreshed = await refreshAccessToken();
-            if (refreshed?.accessToken) {
-                original.headers = {
-                    ...original.headers,
-                    Authorization: `Bearer ${refreshed.accessToken}`,
-                } as any;
+            if (refreshed) {
                 return apiClient(original);
             }
         }

@@ -6,7 +6,6 @@ import type {
     User,
 } from "../types/auth";
 import {
-    setStoredTokens,
     setStoredUser,
     clearAuthStorage,
 } from "../utils/authStorage";
@@ -51,10 +50,6 @@ export async function loginUser(payload: AuthPayload): Promise<AuthResult> {
         data: payload,
     });
 
-    if (data?.tokens) {
-        setStoredTokens(data.tokens);
-        useAuthStore.getState().setTokens(data.tokens);
-    }
     if (data?.user) {
         setStoredUser(data.user);
         useAuthStore.getState().setUser(data.user);
@@ -72,10 +67,6 @@ export async function loginWithGoogle(payload: {
         data: payload,
     });
 
-    if (data?.tokens) {
-        setStoredTokens(data.tokens);
-        useAuthStore.getState().setTokens(data.tokens);
-    }
     if (data?.user) {
         setStoredUser(data.user);
         useAuthStore.getState().setUser(data.user);

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../lib/errors";
 import { loginWithGoogle } from "../../services/authService";
-import { mergeGuestCartApi } from "../../services/cartService";
 import type { AuthResult } from "../../types/auth";
 
 const GOOGLE_IDENTITY_SCRIPT = "https://accounts.google.com/gsi/client?hl=vi";
@@ -82,12 +81,6 @@ export default function GoogleSignInButton({
                 const result = await loginWithGoogle({
                     idToken: response.credential,
                 });
-
-                try {
-                    await mergeGuestCartApi();
-                } catch {
-                    // Keep login success even if merge cart fails.
-                }
 
                 await onLoginSuccess?.(result);
                 toast.success("Đăng nhập Google thành công.");

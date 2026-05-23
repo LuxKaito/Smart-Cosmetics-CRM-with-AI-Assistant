@@ -73,6 +73,11 @@ export default function ProductDetailPage() {
     const [activeImage, setActiveImage] = useState("");
     const [activeTab, setActiveTab] = useState("description");
 
+    useEffect(() => {
+        router.prefetch("/checkout");
+        router.prefetch("/login");
+    }, [router]);
+
     const images = useMemo(() => {
         if (!product) return [];
         if (Array.isArray(product.images) && product.images.length > 0) return product.images;

@@ -13,8 +13,7 @@ export default function Header() {
     const user = useAuthStore((state) => state.user);
     const hydrateAuth = useAuthStore((state) => state.hydrate);
     const cartItems = useCartStore((state) => state.items);
-    const hydrateCart = useCartStore((state) => state.hydrate);
-    const syncCartFromCache = useCartStore((state) => state.syncFromCache);
+    const refreshCart = useCartStore((state) => state.refresh);
 
     const cartCount = useMemo(
         () => cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0),
@@ -29,17 +28,17 @@ export default function Header() {
             toast.error("Đăng xuất thất bại. Vui lòng thử lại.");
         } finally {
             hydrateAuth();
-            hydrateCart();
+            await refreshCart();
         }
     };
 
     useEffect(() => {
         const syncStorageState = () => {
             hydrateAuth();
-            syncCartFromCache();
+            void refreshCart();
         };
 
-        syncStorageState();
+        void syncStorageState();
         window.addEventListener("storage", syncStorageState);
         window.addEventListener("auth-change", syncStorageState);
         window.addEventListener("cart-change", syncStorageState);
@@ -48,7 +47,7 @@ export default function Header() {
             window.removeEventListener("auth-change", syncStorageState);
             window.removeEventListener("cart-change", syncStorageState);
         };
-    }, [hydrateAuth, syncCartFromCache]);
+    }, [hydrateAuth, refreshCart]);
 
     return (
         <header className="site-header">
