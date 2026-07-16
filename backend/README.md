@@ -1,29 +1,40 @@
-﻿# Smart Cosmetics CRM Backend
+# Smart Cosmetics Commerce Backend
 
-Backend monolith for cosmetics ecommerce CRM using Clean Architecture, Express, MongoDB, JWT auth, Google OAuth2, RabbitMQ, and Jest/Supertest.
+Backend API for the LuxBerry cosmetics ecommerce platform. It uses Clean
+Architecture-style layering with Express, MongoDB, JWT authentication, Google
+OAuth, guest carts, PayOS payments, RabbitMQ events, and Jest/Supertest tests.
 
-## Important Changes (May 2026)
+> CRM note: this backend currently supports ecommerce operations plus admin and
+> staff sales management. A full CRM module for lead pipelines, support tickets,
+> campaigns, segmentation, and lifecycle automation is not implemented yet.
 
-1. Removed all mock catalog logic.
-2. Removed `ENABLE_MOCK_CATALOG` usage.
-3. Removed legacy mock routes:
-   - `GET /api/products?limit=36&category=&subcategory=`
-   - `GET /api/products/search?q=serum&limit=20`
-   - `GET /api/products/:id`
-   - `GET /api/categories`
-4. Product and category APIs now read from MongoDB only.
-5. Added guest cart flow using httpOnly cookie `cart_token` for users without login.
-6. Added change password API.
-7. Added staff granular permissions API.
-8. Added Google login aliases and merge guest cart after Google login.
+## What This Backend Provides
+
+- Customer auth: register, verify email, login, Google login, refresh token,
+  logout, profile, shipping addresses, password change, and favorite products.
+- Product catalog backed by MongoDB only, with Excel import from
+  `data/Hasaki_Data_Final.xlsx`.
+- Guest and authenticated customer carts using an httpOnly `cart_token` cookie.
+- Checkout summary, order creation, customer order history, order detail, and
+  customer cancellation.
+- PayOS payment-link creation, webhook, return, and cancel handlers.
+- Review creation with verified-purchase rules.
+- Voucher listing, saving, and admin voucher management.
+- Admin operations for dashboard overview, statistics, products, users, roles,
+  blocking users, and vouchers.
+- Staff sales workspace for order and customer operations.
+- RabbitMQ events for auth, cart, order, payment, and product changes.
+- Shared MongoDB product collection for `../RAG_LANGCHAIN_V4`.
 
 ## Tech Stack
 
 - Node.js, Express.js
 - MongoDB, Mongoose
-- JWT (access + refresh)
-- Google OAuth2 ID Token verification
+- JWT access and refresh tokens
+- Google OAuth2 ID token verification
+- PayOS payment integration
 - RabbitMQ producer/consumer
+- Helmet, CORS allow-list, Mongo sanitize, input sanitization
 - Jest + Supertest
 
 ## Project Structure
@@ -31,90 +42,134 @@ Backend monolith for cosmetics ecommerce CRM using Clean Architecture, Express, 
 ```txt
 backend/
 ├── src/
-│   ├── application/
-│   ├── config/
-│   ├── domain/
-│   ├── infrastructure/
-│   ├── presentation/
-│   ├── scripts/
+│   ├── application/       # DTOs and use-case services
+│   ├── config/            # env, database, dependency container
+│   ├── domain/            # entities and repository contracts
+│   ├── infrastructure/    # MongoDB, RabbitMQ, PayOS, Google OAuth, email
+│   ├── presentation/      # routes, controllers, middlewares
+│   ├── scripts/           # seed/import/admin helper scripts
 │   ├── app.js
 │   └── server.js
 ├── tests/
-├── data/Hasaki_Data_Clean.xlsx
+│   ├── api/
+│   └── unit/
+├── data/Hasaki_Data_Final.xlsx
+├── docker-compose.yml
 └── README.md
 ```
 
 ## Environment
 
-Copy `.env.example` to `.env`.
+Copy `.env.example` to `.env` before running.
+
+```bash
+cp .env.example .env
+```
+
+PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Important groups in `.env`:
 
 ```env
 NODE_ENV=development
 PORT=5000
 API_PREFIX=/api/v1
-MONGO_URI=mongodb://localhost:27017/smart_cosmetics_crm
+FRONTEND_BASE_URL=http://localhost:3000
+
+MONGO_URI=mongodb://mongo:27017/smart_cosmetics_crm
+
 JWT_SECRET=replace_with_a_long_random_access_token_secret
-JWT_EXPIRES_IN=15m
 JWT_REFRESH_SECRET=replace_with_a_long_random_refresh_token_secret
-JWT_REFRESH_EXPIRES_IN=7d
+EMAIL_VERIFICATION_TOKEN_TTL_MINUTES=60
+GUEST_CART_COOKIE_NAME=cart_token
+GUEST_CART_TTL_DAYS=30
+
 GOOGLE_CLIENT_ID=your_google_oauth_client_id
 GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
-RABBITMQ_URL=amqp://guest:guest@localhost:5672
-RABBITMQ_USER_REGISTERED_QUEUE=user.registered
-RABBITMQ_PRODUCT_UPDATED_QUEUE=product.updated
+
+PAYOS_CLIENT_ID=your_payos_client_id
+PAYOS_API_KEY=your_payos_api_key
+PAYOS_CHECKSUM_KEY=your_payos_checksum_key
+PAYOS_RETURN_URL=http://localhost:5000/api/v1/payments/payos/return
+PAYOS_CANCEL_URL=http://localhost:5000/api/v1/payments/payos/cancel
+
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+MAIL_FROM=no-reply@luxberry.vn
+
+RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
 CORS_ORIGIN=http://localhost:3000,http://localhost:5173
 ```
 
-For Google login end-to-end, use the same Google Web Client ID on frontend (`NEXT_PUBLIC_GOOGLE_CLIENT_ID`).
+When running outside Docker, change MongoDB and RabbitMQ hosts to localhost, for
+example `mongodb://localhost:27017/smart_cosmetics_crm` and
+`amqp://guest:guest@localhost:5672`.
 
-## Run
+For Google login end-to-end, use the same Google Web Client ID in the frontend
+environment variable `NEXT_PUBLIC_GOOGLE_CLIENT_ID`.
+
+## Run With Docker
+
+```bash
+docker compose up -d --build
+```
+
+Services:
+
+| Service | URL |
+|---|---|
+| Backend API | `http://localhost:5000` |
+| Health check | `http://localhost:5000/health` |
+| MongoDB | `localhost:27017` |
+| Mongo Express | `http://localhost:8081` |
+| RabbitMQ AMQP | `localhost:5672` |
+| RabbitMQ Management | `http://localhost:15672` |
+
+Seed products after the containers are up:
+
+```bash
+docker compose exec backend npm run seed:products
+docker compose exec backend npm run seed:admin
+```
+
+## Run Locally
+
+Start MongoDB and RabbitMQ separately, update `.env` to use localhost hosts,
+then run:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Health check:
-
-```txt
-GET http://localhost:5000/health
-```
-
-Base prefix:
-
-```txt
-/api/v1
-```
-
-## Seed Data (MongoDB)
-
-1. Create admin:
+Production-style start:
 
 ```bash
-ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=Admin@123456 npm run seed:admin
+npm start
 ```
 
-2. Import products from `data/Hasaki_Data_Clean.xlsx`:
+## Scripts
 
 ```bash
-npm run seed:products
+npm run dev                 # nodemon src/server.js
+npm start                   # node src/server.js
+npm run seed:products       # import data/Hasaki_Data_Final.xlsx
+npm run seed:admin          # seed admin data from env/defaults
+npm run seed:samples        # sample customers, staff, carts, orders
+npm run seed:clear-catalog  # clear imported catalog data
+npm test                    # jest --runInBand
+npm run test:watch
 ```
 
-3. Insert sample users + carts for API tests (products must exist first):
+`seed:samples` expects products to exist first.
 
-```bash
-npm run seed:samples
-```
-
-This script creates/updates:
-
-- customer: `customer1@example.com` / `Customer@123`
-- staff: `staff1@example.com` / `Staff@123`
-- sample staff permissions: `product:create`, `product:update`
-- customer cart with 1 existing product
-- guest cart with `guest-demo-0001`
-
-## Standard Response
+## Standard Response Shape
 
 ```json
 {
@@ -124,24 +179,24 @@ This script creates/updates:
 }
 ```
 
-## Roles and Permissions
+Errors use the same response helper with localized message support where
+implemented.
 
-Role values:
+## Roles
 
-- `user` (customer)
+- `customer`
 - `staff`
 - `admin`
 
-Staff permission keys:
+Admin routes require `admin`. Staff routes require `staff`. Customer order,
+checkout, address, favorite, voucher-save, review-create, and PayOS create flows
+require an authenticated user.
 
-- `dashboard:view`
-- `product:create`
-- `product:update`
-- `product:delete`
-- `user:list`
-- `user:block`
-- `user:assign-role`
-- `user:assign-permission`
+## Main API Prefix
+
+```txt
+/api/v1
+```
 
 ## Authentication APIs
 
@@ -149,6 +204,8 @@ Public:
 
 ```txt
 POST /api/v1/auth/register
+GET  /api/v1/auth/verify-email
+POST /api/v1/auth/resend-verification-email
 POST /api/v1/auth/login
 POST /api/v1/auth/google
 POST /api/v1/auth/refresh
@@ -157,62 +214,38 @@ POST /api/v1/auth/refresh
 Authenticated:
 
 ```txt
-POST /api/v1/auth/logout
-POST /api/v1/auth/change-password
-GET  /api/v1/auth/me
+POST   /api/v1/auth/logout
+POST   /api/v1/auth/change-password
+PATCH  /api/v1/auth/profile
+POST   /api/v1/auth/addresses
+PATCH  /api/v1/auth/addresses/:addressId
+DELETE /api/v1/auth/addresses/:addressId
+GET    /api/v1/auth/favorites
+POST   /api/v1/auth/favorites/:productId
+DELETE /api/v1/auth/favorites/:productId
+GET    /api/v1/auth/me
 ```
 
-Register payload:
-
-```json
-{
-  "email": "customer1@example.com",
-  "password": "Customer@123",
-  "name": "Customer Demo"
-}
-```
-
-Login payload:
-
-```json
-{
-  "email": "customer1@example.com",
-  "password": "Customer@123"
-}
-```
-
-Google login payload:
-
-```json
-{
-  "idToken": "google_id_token"
-}
-```
-
-Notes:
-
-- `idToken` must be generated from Google Identity Services on frontend with the same `GOOGLE_CLIENT_ID` configured in backend.
-- Google login now also supports guest cart merge via `cart_token` cookie (same behavior as email/password login).
-
-Use access token:
+Use access tokens as:
 
 ```txt
 Authorization: Bearer <accessToken>
 ```
 
-## Product APIs (MongoDB)
+## Product APIs
 
 Public:
 
 ```txt
 GET /api/v1/products
 GET /api/v1/products/search
-GET /api/v1/products/:id
 GET /api/v1/products/categories
 GET /api/v1/products/categories/:category/products
+GET /api/v1/products/slug/:slug
+GET /api/v1/products/:slug
 ```
 
-Query supported:
+Supported query fields include:
 
 - `q` or `search`
 - `category`
@@ -222,9 +255,10 @@ Query supported:
 - `minPrice`
 - `maxPrice`
 - `page`, `limit`
-- `sort`: `price`, `-price`, `sale_price`, `-sale_price`, `rating`, `-rating`, `createdAt`, `-createdAt`, `soldCount`, `-soldCount`
+- `sort`: `sale_price`, `-sale_price`, `rating`, `-rating`, `createdAt`,
+  `-createdAt`, `soldCount`, `-soldCount`
 
-Admin or authorized staff:
+Admin-only product write APIs:
 
 ```txt
 POST   /api/v1/products
@@ -232,29 +266,40 @@ PATCH  /api/v1/products/:id
 DELETE /api/v1/products/:id
 ```
 
-Product detail response includes business fields:
+Product writes support uploaded product images through `multer`; uploaded files
+are exposed under `/uploads/products/...`.
+
+Important product fields:
 
 - `product_name_vn`
 - `product_name_en`
 - `image_url`
+- `images`
 - `sale_price`
 - `original_price`
-- `skin_type`
-- `volume`
+- `discount_percent`
 - `brand`
 - `origin`
+- `skin_type`
+- `volume`
 - `rating`
 - `review_count`
 - `qa_count`
 - `description`
+- `category_level_1`
+- `category_level_2`
+- `benefits`
+- `product_type`
+- `ingredients`
+- `usage_instructions`
 
-## Cart APIs (Guest + Customer, MongoDB)
+Public product responses also include compatibility aliases such as `category`,
+`subcategory`, `categories`, `name`, and `usageInstructions`.
 
-User without login:
+## Cart APIs
 
-- call cart APIs normally without Authorization
-- backend auto-creates cookie `cart_token` if missing
-- cart data is persisted in MongoDB by hashed `cart_token`
+Guest users can call cart APIs without Authorization. The backend creates an
+httpOnly `cart_token` cookie and persists the guest cart by a hashed token.
 
 Routes:
 
@@ -263,143 +308,173 @@ GET    /api/v1/cart
 POST   /api/v1/cart/items
 PATCH  /api/v1/cart/items/:productId
 DELETE /api/v1/cart/items/:productId
+DELETE /api/v1/cart/clear
+POST   /api/v1/cart/merge
 ```
 
-Payload add item:
+`POST /api/v1/cart/merge` requires login and merges a guest cart into the user
+cart.
 
-```json
-{
-  "productId": "<mongo_product_id>",
-  "quantity": 1
-}
+## Checkout, Orders, and Payments
+
+Checkout:
+
+```txt
+GET /api/v1/checkout/summary
 ```
+
+Orders:
+
+```txt
+POST  /api/v1/orders
+GET   /api/v1/orders/my
+GET   /api/v1/orders/:id
+PATCH /api/v1/orders/:id/cancel
+```
+
+PayOS:
+
+```txt
+POST /api/v1/payments/payos/create
+POST /api/v1/payments/payos/webhook
+GET  /api/v1/payments/payos/return
+GET  /api/v1/payments/payos/cancel
+```
+
+`return` and `cancel` may redirect to frontend URLs when the payment service
+returns a redirect target.
+
+## Voucher APIs
+
+Public/customer:
+
+```txt
+GET  /api/v1/vouchers
+GET  /api/v1/vouchers/my
+POST /api/v1/vouchers/:code/save
+```
+
+Admin voucher APIs are listed in the Admin section.
+
+## Review APIs
+
+```txt
+GET  /api/v1/reviews/products/:productId
+POST /api/v1/reviews/products/:productId
+```
+
+Creating a review requires an authenticated customer account. The backend
+accepts one review per customer and product, and only after a delivered order
+contains that product. Product `rating` and `review_count` are recalculated
+after creation.
 
 ## Admin APIs
 
 ```txt
-GET   /api/v1/admin/dashboard
-GET   /api/v1/admin/users
-PATCH /api/v1/admin/users/:id/block
-PATCH /api/v1/admin/users/:id/role
-PATCH /api/v1/admin/users/:id/permissions
+GET    /api/v1/admin/overview
+GET    /api/v1/admin/statistics
+GET    /api/v1/admin/products
+POST   /api/v1/admin/products
+PATCH  /api/v1/admin/products/:id
+DELETE /api/v1/admin/products/:id
+GET    /api/v1/admin/users
+POST   /api/v1/admin/users
+PATCH  /api/v1/admin/users/:id
+PATCH  /api/v1/admin/users/:id/block
+PATCH  /api/v1/admin/users/:id/role
+GET    /api/v1/admin/vouchers
+POST   /api/v1/admin/vouchers
+PATCH  /api/v1/admin/vouchers/:id
+DELETE /api/v1/admin/vouchers/:id
 ```
 
-Account management supported:
+Admin user management supports creating staff/customer accounts, updating user
+profile fields, assigning roles, and blocking/unblocking users.
 
-- manage customers (`role=user`)
-- manage staff (`role=staff`)
-- assign role
-- assign granular permissions for staff
+## Staff Sales APIs
 
-## Postman Test Guide
-
-### 1. Register customer
-
-- `POST /api/v1/auth/register`
-- response only returns success message, no access token
-- verify email from link in mailbox before login
-
-### 2. Login customer
-
-- `POST /api/v1/auth/login`
-- save new access token
-
-### 2.1 Login with Google
-
-- `POST /api/v1/auth/google`
-- body:
-
-```json
-{
-  "idToken": "google_id_token"
-}
+```txt
+GET   /api/v1/staff/overview
+GET   /api/v1/staff/orders
+GET   /api/v1/staff/orders/:id
+PATCH /api/v1/staff/orders/:id/status
+PATCH /api/v1/staff/orders/:id/confirm
+PATCH /api/v1/staff/orders/:id/cancel
+GET   /api/v1/staff/customers
+GET   /api/v1/staff/customers/:id
+GET   /api/v1/staff/customers/:id/orders
 ```
 
-### 3. Customer change password
-
-- `POST /api/v1/auth/change-password`
-- header: `Authorization: Bearer <accessToken>`
-- body:
-
-```json
-{
-  "currentPassword": "Customer@123",
-  "newPassword": "Customer@12345"
-}
-```
-
-### 4. Product search and detail
-
-- `GET /api/v1/products/search?q=serum&limit=20`
-- `GET /api/v1/products/<productId>`
-- `GET /api/v1/products/categories`
-
-### 5. Guest cart flow
-
-1. `POST /api/v1/cart/items` with body `{ "productId": "<id>", "quantity": 1 }`
-2. Keep the `cart_token` cookie for next requests.
-3. Continue guest cart APIs:
-   - `GET /api/v1/cart`
-   - `PATCH /api/v1/cart/items/<productId>`
-   - `DELETE /api/v1/cart/items/<productId>`
-
-### 6. Customer cart flow (logged-in)
-
-- same cart endpoints, but with `Authorization: Bearer <accessToken>`
-- no need `x-guest-id`
-
-### 7. Admin/staff permission flow
-
-1. Login admin.
-2. `PATCH /api/v1/admin/users/:id/role` body `{ "role": "staff" }`
-3. `PATCH /api/v1/admin/users/:id/permissions` body:
-
-```json
-{
-  "permissions": ["product:create", "product:update"]
-}
-```
-
-4. Login as staff and test:
-   - allowed: create/update product
-   - forbidden (403): delete product if `product:delete` not assigned
+The older `/api/v1/admin/orders*` and `/api/v1/admin/customers*` routes are not
+exposed; staff sales operations live under `/api/v1/staff`.
 
 ## RabbitMQ Events
 
-Queues:
+Queues are configured through `.env` and asserted on startup:
 
 - `user.registered`
+- `email.verification.requested`
+- `user.email.verified`
+- `cart.merged`
+- `order.created`
+- `order.cancelled`
+- `payment.pending`
+- `payment.success`
+- `payment.failed`
+- `product.created`
 - `product.updated`
+- `product.deleted`
 
-Published when:
+If RabbitMQ is unavailable during startup, the API continues running and logs a
+warning, but async messaging and email dispatch will not be available until the
+queue service is reachable.
 
-- register success
-- product create/update/delete success
+## Shared MongoDB for RAG
 
-## Security
+`../RAG_LANGCHAIN_V4` reads the same `smart_cosmetics_crm.products` collection.
+Start this backend Compose stack first so it creates
+`cosmetics_shared_network`, import products, then start the RAG Compose stack:
 
-- Helmet
-- CORS allow-list
-- Mongo sanitize
-- Input sanitization
-- bcrypt password hashing
-- Refresh token hash storage + invalidation on logout/password change
+```bash
+cd backend
+docker compose up -d --build
+docker compose exec backend npm run seed:products
 
-## Testing Status
+cd ../RAG_LANGCHAIN_V4
+docker compose up -d --build
+docker compose exec app uv run python scripts/build_embeddings.py
+```
 
-Automated tests executed:
+The runtime chat path does not read the Excel file directly; it reads MongoDB
+and Qdrant after the import/reindex pipeline.
+
+## Testing
+
+Run the backend test suite:
 
 ```bash
 npm test
 ```
 
-Result:
+Current test folders:
 
-- 5 test suites passed
-- 6 tests passed
+- `tests/api`
+- `tests/unit`
 
-Notes from current local environment during manual runtime check:
+The test command is intentionally documented without a fixed pass count so the
+README does not go stale when new tests are added.
 
-- Docker engine is not running in this machine session.
-- `mongosh` command is not installed in this machine session.
-- Because of that, live Postman calls were documented and prepared, while automated route/service tests were executed successfully.
+## Related Docs
+
+- Admin guide: [`HD_Admin.md`](HD_Admin.md)
+- PayOS integration: [`HD_TichHop_PayOS.md`](HD_TichHop_PayOS.md)
+- Map/location integration: [`huongdan_tichhop_map.md`](huongdan_tichhop_map.md)
+- Feature notes: [`chucnang.md`](chucnang.md)
+
+## Security Notes
+
+- Do not commit real `.env` secrets.
+- Rotate JWT, Google OAuth, PayOS, SMTP, and database credentials before
+  deployment.
+- Keep MongoDB, RabbitMQ, and admin dashboards behind private networking in
+  production.
