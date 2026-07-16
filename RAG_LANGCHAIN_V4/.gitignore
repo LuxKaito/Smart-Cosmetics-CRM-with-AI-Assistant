@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime files
+logs/
+*.log
+.DS_Store
+
+# Local environment
+.env
+.env.local
+
+# Virtual environments
+.venv
+
+# Data caches and vector artifacts
+data/cache/
+data/embeddings/
+data/vectordb/
+outputs/

@@ -1,0 +1,17 @@
+models:
+    llm:
+        provider: ollama
+        model_name: qwen2.5:3b
+        temperature: 0.2
+        max_tokens: 512
+    embedding:
+        model_name: dangvantuan/vietnamese-embedding
+    reranker:
+        model_name: AITeamVN/Vietnamese_Reranker
+retrieval:
+    top_n_candidates: 20
+    top_k: 4
+    use_rerank: true
+chunking:
+    chunk_size: 450
+    chunk_overlap: 70
