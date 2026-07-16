@@ -53,13 +53,6 @@ export const featureIcons = [
     },
 ];
 
-export const coupons = [
-    { code: "EGA10", text: "Giảm 10% cho đơn từ 500k" },
-    { code: "EGA15", text: "Giảm 15% cho đơn từ 700k" },
-    { code: "EGA99K", text: "Giảm 99k cho đơn từ 600k" },
-    { code: "FREESHIP", text: "Miễn phí vận chuyển cho đơn từ 500k" },
-];
-
 import type { Product } from "../types/product";
 
 export const flashDeals: Product[] = [];

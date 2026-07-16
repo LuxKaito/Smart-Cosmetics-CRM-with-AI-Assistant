@@ -40,14 +40,16 @@ function ProductsPageContent() {
 
     // Lấy giá trị search từ URL để khởi tạo ô input
     const [searchInput, setSearchInput] = useState(
-        searchParams.get("search") || "",
+        searchParams.get("search") || searchParams.get("q") || "",
     );
 
     // --- 2. LẤY GIÁ TRỊ TỪ URL QUERIES ---
     const selectedCategory = searchParams.get("category") || "";
+    const selectedSubcategory = searchParams.get("subcategory") || "";
     const selectedBrand = searchParams.get("brand") || "";
     const selectedSkinType = searchParams.get("skin_type") || "";
-    const searchQuery = searchParams.get("search") || "";
+    const searchQuery =
+        searchParams.get("search") || searchParams.get("q") || "";
     const sort = searchParams.get("sort") || "-soldCount";
     const currentPage = Number(searchParams.get("page") || 1);
     const minPriceParam = searchParams.get("minPrice");
@@ -79,6 +81,7 @@ function ProductsPageContent() {
                     limit: 20,
                     search: searchQuery,
                     category: selectedCategory,
+                    subcategory: selectedSubcategory,
                     brand: selectedBrand,
                     skin_type: selectedSkinType,
                     minPrice: minPrice || undefined,
@@ -116,6 +119,7 @@ function ProductsPageContent() {
         currentPage,
         searchQuery,
         selectedCategory,
+        selectedSubcategory,
         selectedBrand,
         selectedSkinType,
         minPrice,
@@ -179,6 +183,7 @@ function ProductsPageContent() {
         updateFilters({
             search: "",
             category: "",
+            subcategory: "",
             brand: "",
             skin_type: "",
             minPrice: "",
@@ -222,7 +227,11 @@ function ProductsPageContent() {
                     skinTypes={skinTypeOptions}
                     selectedCategory={selectedCategory}
                     onCategoryChange={(value) =>
-                        updateFilters({ category: value, page: 1 })
+                        updateFilters({ category: value, subcategory: "", page: 1 })
+                    }
+                    selectedSubcategory={selectedSubcategory}
+                    onSubcategoryChange={(value) =>
+                        updateFilters({ subcategory: value, page: 1 })
                     }
                     selectedBrand={selectedBrand}
                     onBrandChange={(value) =>

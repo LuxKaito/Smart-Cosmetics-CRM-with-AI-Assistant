@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { z } from "zod";
@@ -206,24 +207,15 @@ export default function RegisterPage() {
                         </form>
                     </div>
 
-                    <aside className="rounded-3xl bg-[#FFF7FA] p-6">
-                        <h2 className="text-2xl font-bold text-[#2B1B24]">
-                            Đăng ký ngay để nhận ưu đãi
-                        </h2>
-                        <ul className="mt-4 space-y-3 text-sm text-[#7A6A70]">
-                            <li className="rounded-2xl bg-white p-4">
-                                Voucher thành viên độc quyền mỗi tháng.
-                            </li>
-                            <li className="rounded-2xl bg-white p-4">
-                                Theo dõi đơn hàng và lịch sử mua sắm dễ dàng.
-                            </li>
-                            <li className="rounded-2xl bg-white p-4">
-                                Lưu sản phẩm yêu thích cho lần mua tiếp theo.
-                            </li>
-                            <li className="rounded-2xl bg-white p-4">
-                                Tích điểm đổi quà trong hệ sinh thái LuxBerry.
-                            </li>
-                        </ul>
+                    <aside className="overflow-hidden rounded-3xl bg-[#FFF7FA]">
+                        <Image
+                            src="/img/img_register.png"
+                            alt="Quyền lợi thành viên LuxBerry khi đăng ký tài khoản"
+                            width={1024}
+                            height={1536}
+                            priority
+                            className="h-full max-h-[920px] min-h-[420px] w-full object-cover object-top"
+                        />
                     </aside>
                 </section>
             </main>

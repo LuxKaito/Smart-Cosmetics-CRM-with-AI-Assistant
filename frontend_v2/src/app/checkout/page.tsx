@@ -138,12 +138,19 @@ export default function CheckoutPage() {
     const [summary, setSummary] = useState<CheckoutSummary | null>(null);
     const [form, setForm] = useState<CheckoutForm>(defaultForm);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
+    const [appliedVoucherCode, setAppliedVoucherCode] = useState("");
+    const [voucherDropdownOpen, setVoucherDropdownOpen] = useState(false);
+    const [voucherStatus, setVoucherStatus] = useState<{
+        type: "error" | "success" | "";
+        message: string;
+    }>({ type: "", message: "" });
     const [status, setStatus] = useState<{
         type: "error" | "success" | "";
         message: string;
     }>({ type: "", message: "" });
     const [isLoading, setIsLoading] = useState(true);
     const [isEstimatingShipping, setIsEstimatingShipping] = useState(false);
+    const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [bootstrapped, setBootstrapped] = useState(false);
 
@@ -176,6 +183,9 @@ export default function CheckoutPage() {
             typeof window !== "undefined"
                 ? window.localStorage.getItem("checkout_note_draft") || ""
                 : "";
+        const defaultAddress =
+            user?.shippingAddresses?.find((address) => address.isDefault) ||
+            user?.shippingAddresses?.[0];
 
         let mounted = true;
         const loadSummary = async () => {
@@ -190,8 +200,21 @@ export default function CheckoutPage() {
                 );
                 setForm((prev) => ({
                     ...prev,
-                    fullName: user?.name || prev.fullName || "",
+                    fullName:
+                        defaultAddress?.fullName ||
+                        user?.name ||
+                        prev.fullName ||
+                        "",
+                    phone:
+                        defaultAddress?.phone || user?.phone || prev.phone || "",
                     email: user?.email || prev.email || "",
+                    province:
+                        defaultAddress?.province || prev.province || "",
+                    district:
+                        defaultAddress?.district || prev.district || "",
+                    ward: defaultAddress?.ward || prev.ward || "",
+                    addressLine:
+                        defaultAddress?.addressLine || prev.addressLine || "",
                     note: prev.note || draftNote,
                 }));
             } catch (error) {
@@ -224,9 +247,12 @@ export default function CheckoutPage() {
         const timer = window.setTimeout(async () => {
             setIsEstimatingShipping(true);
             try {
-                const data = await fetchCheckoutSummary(form.province.trim());
+                const data = await fetchCheckoutSummary(form.province.trim(), appliedVoucherCode);
                 if (cancelled) return;
                 setSummary(data);
+                if (data.voucher?.code) {
+                    setAppliedVoucherCode(data.voucher.code);
+                }
                 setStatus((prev) =>
                     prev.type === "error" && prev.message
                         ? { type: "", message: "" }
@@ -250,7 +276,7 @@ export default function CheckoutPage() {
             cancelled = true;
             window.clearTimeout(timer);
         };
-    }, [form.province, bootstrapped]);
+    }, [form.province, appliedVoucherCode, bootstrapped]);
     useEffect(() => {
         if (!streetDropdownOpen) return;
         const query = streetQuery.trim();
@@ -414,6 +440,66 @@ export default function CheckoutPage() {
         return "";
     };
 
+    const selectVoucher = async (code: string) => {
+        const normalizedCode = code.trim().toUpperCase();
+        const selectedVoucher = summary?.availableVouchers?.find(
+            (voucher) => voucher.code === normalizedCode,
+        );
+        if (!normalizedCode || !selectedVoucher) {
+            setVoucherStatus({
+                type: "error",
+                message: "Vui lòng chọn voucher trong tài khoản.",
+            });
+            return;
+        }
+
+        if (!selectedVoucher.eligible) {
+            setVoucherStatus({
+                type: "error",
+                message:
+                    selectedVoucher.disabledReason ||
+                    "Voucher chưa đủ điều kiện áp dụng.",
+            });
+            return;
+        }
+
+        try {
+            setIsApplyingVoucher(true);
+            setVoucherStatus({ type: "", message: "" });
+            const data = await fetchCheckoutSummary(form.province.trim(), normalizedCode);
+            setSummary(data);
+            const appliedCode = data.voucher?.code || normalizedCode;
+            setAppliedVoucherCode(appliedCode);
+            setVoucherDropdownOpen(false);
+            setVoucherStatus({ type: "", message: "" });
+        } catch (error) {
+            setVoucherStatus({
+                type: "error",
+                message: getErrorMessage(error, "Mã giảm giá không hợp lệ hoặc chưa đủ điều kiện áp dụng."),
+            });
+        } finally {
+            setIsApplyingVoucher(false);
+        }
+    };
+
+    const removeVoucher = async () => {
+        try {
+            setIsApplyingVoucher(true);
+            const data = await fetchCheckoutSummary(form.province.trim());
+            setSummary(data);
+            setAppliedVoucherCode("");
+            setVoucherDropdownOpen(false);
+            setVoucherStatus({ type: "", message: "" });
+        } catch (error) {
+            setVoucherStatus({
+                type: "error",
+                message: getErrorMessage(error, "Không thể bỏ mã giảm giá lúc này."),
+            });
+        } finally {
+            setIsApplyingVoucher(false);
+        }
+    };
+
     const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!summary || isSubmitting) return;
@@ -439,6 +525,7 @@ export default function CheckoutPage() {
                 },
                 paymentMethod,
                 note: form.note.trim(),
+                voucherCode: summary.voucher?.code || appliedVoucherCode || undefined,
             });
 
             if (typeof window !== "undefined") {
@@ -757,18 +844,106 @@ export default function CheckoutPage() {
                                 </div>
 
                                 <div className="mt-5 space-y-2 text-sm">
+                                    <div className="rounded-2xl border border-[#FFD4E1] bg-[#FFF7FA] p-3">
+                                        <label className="text-xs font-semibold text-[#7A6A70]">
+                                            Mã giảm giá
+                                        </label>
+                                        <div className="relative mt-2">
+                                            <button
+                                                type="button"
+                                                disabled={isApplyingVoucher}
+                                                onClick={() => setVoucherDropdownOpen((value) => !value)}
+                                                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-[#E4D8DF] bg-white px-3 text-left text-sm font-semibold text-[#2B1B24] outline-none transition hover:border-[#F999B7] disabled:cursor-not-allowed disabled:opacity-60">
+                                                <span>
+                                                    {summary.voucher?.code
+                                                        ? `Đã chọn ${summary.voucher.code}`
+                                                        : "Chọn voucher đã lưu"}
+                                                </span>
+                                                <span className="text-[#F999B7]">⌄</span>
+                                            </button>
+                                            {voucherDropdownOpen ? (
+                                                <div className="absolute right-0 z-30 mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-[#FFD4E1] bg-white p-2 shadow-[0_18px_42px_rgba(43,27,36,0.16)]">
+                                                    {summary.availableVouchers?.length ? (
+                                                        summary.availableVouchers.map((voucher) => (
+                                                            <button
+                                                                key={voucher.code}
+                                                                type="button"
+                                                                disabled={!voucher.eligible || isApplyingVoucher}
+                                                                onClick={() => void selectVoucher(voucher.code)}
+                                                                className="mb-2 w-full rounded-xl border border-[#F4DEE6] p-3 text-left last:mb-0 enabled:hover:border-[#F999B7] enabled:hover:bg-[#FFF7FA] disabled:cursor-not-allowed disabled:bg-[#FAF6F8] disabled:opacity-70">
+                                                                <span className="flex items-center justify-between gap-3">
+                                                                    <strong className="text-[#2B1B24]">
+                                                                        {voucher.code}
+                                                                    </strong>
+                                                                    <span className="text-xs font-bold text-[#F999B7]">
+                                                                        {voucher.discountAmount
+                                                                            ? `-${formatCurrency(voucher.discountAmount)}`
+                                                                            : voucher.discountType === "percent"
+                                                                              ? `${voucher.discountValue}%`
+                                                                              : formatCurrency(voucher.discountValue)}
+                                                                    </span>
+                                                                </span>
+                                                                <span className="mt-1 block text-xs text-[#7A6A70]">
+                                                                    {voucher.name}
+                                                                </span>
+                                                                <span
+                                                                    className={`mt-2 block rounded-lg px-2 py-1 text-xs ${
+                                                                        voucher.eligible
+                                                                            ? "bg-[#EEFBEF] text-[#2b9f6a]"
+                                                                            : "bg-[#FFF0F5] text-[#B14063]"
+                                                                    }`}>
+                                                                    {voucher.eligible
+                                                                        ? "Đủ điều kiện áp dụng"
+                                                                        : voucher.disabledReason ||
+                                                                          "Chưa đủ điều kiện áp dụng"}
+                                                                </span>
+                                                            </button>
+                                                        ))
+                                                    ) : (
+                                                        <p className="rounded-xl bg-[#FFF7FA] px-3 py-4 text-sm text-[#7A6A70]">
+                                                            Bạn chưa lưu voucher nào.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                        {voucherStatus.message ? (
+                                            <p
+                                                className={`mt-2 rounded-xl px-3 py-2 text-xs ${
+                                                    voucherStatus.type === "error"
+                                                        ? "bg-[#FFF0F5] text-[#E11D48]"
+                                                        : "bg-[#EEFBEF] text-[#2b9f6a]"
+                                                }`}>
+                                                {voucherStatus.message}
+                                            </p>
+                                        ) : null}
+                                        {summary.voucher ? (
+                                            <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-[#EEFBEF] px-3 py-2 text-xs text-[#2b9f6a]">
+                                                <span>
+                                                    Đã áp dụng mã {summary.voucher.code}.
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    disabled={isApplyingVoucher}
+                                                    onClick={() => void removeVoucher()}
+                                                    className="font-semibold text-[#E11D48] underline-offset-2 hover:underline disabled:opacity-60">
+                                                    Xóa
+                                                </button>
+                                            </div>
+                                        ) : null}
+                                    </div>
                                     <div className="flex justify-between">
                                         <span className="text-[#7A6A70]">Tạm tính</span>
                                         <strong>{formatCurrency(summary.subtotal)}</strong>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-[#7A6A70]">Giảm giá</span>
+                                        <span className="text-[#7A6A70]">Giảm giá sản phẩm</span>
                                         <strong className="text-[#2b9f6a]">
-                                            -{formatCurrency(summary.discount)}
+                                            -{formatCurrency(summary.itemDiscount || 0)}
                                         </strong>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-[#7A6A70]">Vận chuyển</span>
+                                        <span className="text-[#7A6A70]">Phí vận chuyển</span>
                                         <strong>
                                             {hasShippingAddress
                                                 ? summary.shippingFee === 0
@@ -777,12 +952,20 @@ export default function CheckoutPage() {
                                                 : "Chưa tính"}
                                         </strong>
                                     </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-[#7A6A70]">
+                                            Mã giảm giá{summary.voucher?.code ? ` (${summary.voucher.code})` : ""}
+                                        </span>
+                                        <strong className="text-[#F999B7]">
+                                            -{formatCurrency(summary.voucherDiscount || 0)}
+                                        </strong>
+                                    </div>
                                 </div>
 
                                 <div className="mt-4 border-t border-[#FFD4E1] pt-4">
                                     <div className="flex items-center justify-between">
                                         <span className="text-base font-semibold">
-                                            Tổng cộng
+                                            Tổng thanh toán
                                         </span>
                                         <strong className="text-2xl text-[#F999B7]">
                                             {formatCurrency(finalTotal)}

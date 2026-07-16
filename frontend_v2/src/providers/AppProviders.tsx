@@ -27,7 +27,7 @@ export default function AppProviders({ children }: AppProvidersProps) {
         <QueryClientProvider client={queryClient}>
             <AuthHydrator />
             {children}
-            <Toaster position="top-right" richColors />
+            <Toaster position="top-right" richColors duration={1000} />
         </QueryClientProvider>
     );
 }

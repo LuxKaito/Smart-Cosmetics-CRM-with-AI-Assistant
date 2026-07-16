@@ -83,7 +83,7 @@ export default function CheckoutFailedPage() {
                     <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-[#FFD4E1] bg-[#FFF7FA] p-4 text-sm">
                         <p>
                             <strong>Mã đơn hàng:</strong>{" "}
-                            {order?.id || order?._id || orderId || "--"}
+                            {order?.orderCode || "--"}
                         </p>
                         {order?.paymentStatus ? (
                             <p className="mt-1">

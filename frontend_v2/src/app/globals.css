@@ -4,12 +4,12 @@
 
 :root {
     color-scheme: light;
-    --lux-pink-light: #ffd4e1;
-    --lux-pink-main: #f999b7;
-    --lux-white: #ffffff;
-    --lux-cream: #fff7fa;
-    --lux-text: #2b1b24;
-    --lux-muted: #7a6a70;
+    --lux-pink-light: #FFD4E1;
+    --lux-pink-main: #F999B7;
+    --lux-white: #FFFFFF;
+    --lux-cream: #FFF7FA;
+    --lux-text: #2B1B24;
+    --lux-muted: #7A6A70;
 }
 
 html,
@@ -17,4 +17,33 @@ body {
     min-height: 100%;
     background: var(--lux-cream);
     color: var(--lux-text);
+}
+
+.admin-input {
+    height: 48px;
+    width: 100%;
+    min-width: 0;
+    border-radius: 14px;
+    border: 1px solid #f1e7ec;
+    background: #ffffff;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #2b1b24;
+    outline: none;
+    transition:
+        border-color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.admin-input.has-left-icon {
+    padding-left: 44px;
+}
+
+.admin-input::placeholder {
+    color: #a99ba2;
+}
+
+.admin-input:focus {
+    border-color: #F999B7;
+    box-shadow: 0 0 0 4px rgba(249, 153, 183, 0.14);
 }

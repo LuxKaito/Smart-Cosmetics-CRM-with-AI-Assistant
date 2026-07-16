@@ -1,23 +1,38 @@
-import axios from "axios";
-import { API_BASE_URL } from "../lib/config";
+import { apiRequest } from "../lib/apiClient";
 
-interface ReviewPayload {
-    productId: string;
+export interface ProductReview {
+    _id: string;
+    userName: string;
     userEmail: string;
     rating: number;
-    comment: string;
+    comment?: string;
+    verifiedPurchase?: boolean;
+    createdAt?: string;
 }
 
-export async function addReview(payload: ReviewPayload): Promise<unknown> {
-    const response = await axios.post(`${API_BASE_URL}/api/reviews`, payload, {
-        headers: { "Content-Type": "application/json" },
-    });
-    return response.data;
+export interface ReviewEligibility {
+    canReview: boolean;
+    reason: "AUTH_REQUIRED" | "CUSTOMER_REQUIRED" | "REVIEW_ALREADY_EXISTS" | "REVIEW_PURCHASE_REQUIRED" | null;
 }
 
-export async function fetchReviews(productId: string): Promise<unknown[]> {
-    const response = await axios.get(`${API_BASE_URL}/api/reviews`, {
-        params: { productId },
+export interface ProductReviewList {
+    items: ProductReview[];
+    eligibility: ReviewEligibility;
+}
+
+export async function addReview(
+    productId: string,
+    payload: { rating: number; comment: string },
+): Promise<{ review: ProductReview; summary: { rating: number; reviewCount: number } }> {
+    return apiRequest({
+        url: `/reviews/products/${productId}`,
+        method: "POST",
+        data: payload,
     });
-    return response.data;
+}
+
+export async function fetchReviews(productId: string): Promise<ProductReviewList> {
+    return apiRequest<ProductReviewList>({
+        url: `/reviews/products/${productId}`,
+    });
 }

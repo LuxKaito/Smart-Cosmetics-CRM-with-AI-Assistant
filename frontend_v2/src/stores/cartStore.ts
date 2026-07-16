@@ -9,6 +9,8 @@ import {
 } from "../services/cartService";
 import { getCartItems } from "../utils/cart";
 
+let refreshRequestId = 0;
+
 interface CartState {
     items: CartItem[];
     hydrated: boolean;
@@ -17,6 +19,7 @@ interface CartState {
     refresh: () => Promise<void>;
     syncFromCache: () => void;
     setItems: (items: CartItem[]) => void;
+    reset: () => void;
     addItem: (item: CartItem) => Promise<void>;
     updateItem: (productId: string, quantity: number) => Promise<void>;
     removeItem: (productId: string) => Promise<void>;
@@ -33,11 +36,14 @@ export const useCartStore = create<CartState>((set, get) => ({
     },
     refresh: async () => {
         if (get().isHydrating) return;
+        const requestId = ++refreshRequestId;
         set({ isHydrating: true });
         try {
             const items = await fetchCart();
+            if (requestId !== refreshRequestId) return;
             set({ items, hydrated: true, isHydrating: false });
         } catch {
+            if (requestId !== refreshRequestId) return;
             set({
                 items: getCartItems(),
                 hydrated: true,
@@ -50,6 +56,10 @@ export const useCartStore = create<CartState>((set, get) => ({
     },
     setItems: (items) => {
         set({ items, hydrated: true });
+    },
+    reset: () => {
+        refreshRequestId += 1;
+        set({ items: [], hydrated: true, isHydrating: false });
     },
     addItem: async (item) => {
         const items = await addCartItem(item.productId, item.quantity || 1);

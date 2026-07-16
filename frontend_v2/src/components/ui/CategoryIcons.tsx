@@ -1,9 +1,11 @@
 import Image from "next/image";
+import Link from "next/link";
 
 interface CategoryIconItem {
     label: string;
     image?: string;
     highlight?: boolean;
+    href?: string;
 }
 
 interface CategoryIconsProps {
@@ -23,10 +25,8 @@ export default function CategoryIcons({ items }: CategoryIconsProps) {
                     const iconItem =
                         typeof item === "string" ? { label: item } : item;
 
-                    return (
-                        <article
-                            key={`${iconItem.label}-${index}`}
-                            className="category-icon-card">
+                    const content = (
+                        <>
                             <div className="icon-circle">
                                 {iconItem.image ? (
                                     <Image
@@ -46,6 +46,21 @@ export default function CategoryIcons({ items }: CategoryIconsProps) {
                                 }>
                                 {iconItem.label}
                             </p>
+                        </>
+                    );
+
+                    return iconItem.href ? (
+                        <Link
+                            key={`${iconItem.label}-${index}`}
+                            className="category-icon-card"
+                            href={iconItem.href}>
+                            {content}
+                        </Link>
+                    ) : (
+                        <article
+                            key={`${iconItem.label}-${index}`}
+                            className="category-icon-card">
+                            {content}
                         </article>
                     );
                 })}

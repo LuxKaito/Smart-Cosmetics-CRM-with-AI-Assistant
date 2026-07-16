@@ -12,7 +12,7 @@ export class ApiError extends Error {
 
 export function getErrorMessage(
     error: unknown,
-    fallback = "Request failed",
+    fallback = "Yêu cầu không thành công.",
 ): string {
     if (error instanceof Error) return error.message || fallback;
     return fallback;

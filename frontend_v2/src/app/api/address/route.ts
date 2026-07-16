@@ -270,7 +270,7 @@ export async function GET(request: NextRequest) {
             {
                 success: false,
                 message:
-                    "VIETMAP_API_KEY chua duoc cau hinh tren frontend_v2/.env",
+                    "VIETMAP_API_KEY chưa được cấu hình trong frontend_v2/.env",
             },
             { status: 500 },
         );

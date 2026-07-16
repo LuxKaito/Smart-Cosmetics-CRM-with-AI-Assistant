@@ -1,26 +1,49 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { logoutUser } from "../../services/authService";
 import { useAuthStore } from "../../stores/authStore";
 import { useCartStore } from "../../stores/cartStore";
+import CategorySidebar from "../ui/CategorySidebar";
 
 const quickLinks = ["Kem chống nắng", "Son môi", "Bông tẩy trang", "Serum"];
 
 export default function Header() {
+    const router = useRouter();
     const user = useAuthStore((state) => state.user);
     const hydrateAuth = useAuthStore((state) => state.hydrate);
     const cartItems = useCartStore((state) => state.items);
     const refreshCart = useCartStore((state) => state.refresh);
+    const [searchText, setSearchText] = useState("");
 
     const cartCount = useMemo(
         () => cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0),
         [cartItems],
     );
+    const displayName = useMemo(
+        () =>
+            user?.name?.trim() ||
+            [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+            "Khách hàng",
+        [user],
+    );
+
+    const handleCatalogSearch = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const keyword = searchText.trim();
+        router.push(
+            keyword
+                ? `/products?search=${encodeURIComponent(keyword)}&page=1`
+                : "/products",
+        );
+    };
 
     const handleLogout = async () => {
+        router.replace("/");
         try {
             await logoutUser();
             toast.success("Đăng xuất thành công.");
@@ -52,11 +75,13 @@ export default function Header() {
     return (
         <header className="site-header">
             <div className="sale-topbar">
-                <span>Siêu sale chính hãng</span>
-                <strong>15-20 tháng 10</strong>
-                <span>Miễn phí giao hàng</span>
-                <strong>Chỉ 5 ngày</strong>
-                <Link href="/products">Xem ngay</Link>
+                <div className="sale-marquee" aria-label="Thông báo khuyến mãi">
+                    <span>Siêu sale chính hãng</span>
+                    <strong>Flash Sale mỗi ngày</strong>
+                    <span>Miễn phí giao hàng cho đơn đủ điều kiện</span>
+                    <strong>Lưu voucher ngay</strong>
+                    <Link href="/products">Xem ngay</Link>
+                </div>
             </div>
 
             <div className="header-top">
@@ -65,27 +90,43 @@ export default function Header() {
                         className="logo-link"
                         href="/"
                         aria-label="Về trang chủ">
-                        <span className="logo-main">TK BEAUTY</span>
+                        <Image
+                            src="/Logo_LuxBerry.png"
+                            alt="LuxBerry Beauty"
+                            width={240}
+                            height={66}
+                            priority
+                            style={{
+                                width: "auto",
+                                height: "56px",
+                                maxWidth: "100%",
+                                objectFit: "contain",
+                            }}
+                        />
                     </Link>
                 </div>
 
-                <div className="search-wrap">
+                <form className="search-wrap" onSubmit={handleCatalogSearch}>
                     <input
                         type="text"
-                        placeholder="Tìm theo thương hiệu."
+                        value={searchText}
+                        onChange={(event) => setSearchText(event.target.value)}
+                        placeholder="Tìm sản phẩm, thương hiệu, công dụng..."
                         aria-label="Tìm kiếm"
                     />
-                    <button type="button" aria-label="Tìm">
+                    <button type="submit" aria-label="Tìm">
                         <span className="search-icon" aria-hidden="true" />
                     </button>
                     <div className="quick-links">
                         {quickLinks.map((item) => (
-                            <Link key={item} href="/products">
+                            <Link
+                                key={item}
+                                href={`/products?search=${encodeURIComponent(item)}&page=1`}>
                                 {item}
                             </Link>
                         ))}
                     </div>
-                </div>
+                </form>
 
                 <div className="header-meta">
                     <div className="meta-item">
@@ -110,7 +151,7 @@ export default function Header() {
                             <strong>Tài khoản</strong>
                             {user ? (
                                 <span className="meta-sub">
-                                    Xin chào, {user.firstName || user.email}
+                                    Xin chào, {displayName}
                                 </span>
                             ) : (
                                 <Link className="meta-sub" href="/login">
@@ -142,10 +183,10 @@ export default function Header() {
                                 className="account-dropdown-menu"
                                 role="menu"
                                 aria-label="Tùy chọn tài khoản">
-                                {user?.role === "admin" ? (
+                                {user?.role === "admin" || user?.role === "staff" ? (
                                     <Link
                                         className="account-dropdown-item"
-                                        href="/admin">
+                                        href={user?.role === "staff" ? "/staff" : "/admin"}>
                                         <span
                                             className="account-dropdown-icon"
                                             aria-hidden="true">
@@ -171,7 +212,7 @@ export default function Header() {
                                                 />
                                             </svg>
                                         </span>
-                                        Quan tri he thong
+                                        {user?.role === "staff" ? "Khu vực nhân viên" : "Quản trị hệ thống"}
                                     </Link>
                                 ) : null}
                                 <Link
@@ -215,7 +256,7 @@ export default function Header() {
                                 </Link>
                                 <Link
                                     className="account-dropdown-item"
-                                    href="/orders">
+                                    href="/account/orders">
                                     <span
                                         className="account-dropdown-icon"
                                         aria-hidden="true">
@@ -250,7 +291,37 @@ export default function Header() {
                                             />
                                         </svg>
                                     </span>
-                                    Lịch sử giao hàng
+                                    Đơn hàng của tôi
+                                </Link>
+                                <Link
+                                    className="account-dropdown-item"
+                                    href="/account/vouchers">
+                                    <span
+                                        className="account-dropdown-icon"
+                                        aria-hidden="true">
+                                        <svg
+                                            width="20"
+                                            height="20"
+                                            viewBox="0 0 20 20"
+                                            fill="none">
+                                            <rect
+                                                x="3"
+                                                y="5"
+                                                width="14"
+                                                height="10"
+                                                rx="2"
+                                                stroke="#f999b7"
+                                                strokeWidth="2"
+                                            />
+                                            <path
+                                                d="M7 8h6M7 12h4"
+                                                stroke="#f999b7"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                            />
+                                        </svg>
+                                    </span>
+                                    Voucher của tôi
                                 </Link>
                                 <Link
                                     className="account-dropdown-item"
@@ -273,7 +344,7 @@ export default function Header() {
                                 </Link>
                                 <Link
                                     className="account-dropdown-item"
-                                    href="/address">
+                                    href="/account/address">
                                     <span
                                         className="account-dropdown-icon"
                                         aria-hidden="true">
@@ -297,6 +368,36 @@ export default function Header() {
                                         </svg>
                                     </span>
                                     Địa chỉ giao hàng
+                                </Link>
+                                <Link
+                                    className="account-dropdown-item"
+                                    href="/account/change-password">
+                                    <span
+                                        className="account-dropdown-icon"
+                                        aria-hidden="true">
+                                        <svg
+                                            width="20"
+                                            height="20"
+                                            viewBox="0 0 20 20"
+                                            fill="none">
+                                            <rect
+                                                x="4"
+                                                y="8"
+                                                width="12"
+                                                height="9"
+                                                rx="2"
+                                                stroke="#f999b7"
+                                                strokeWidth="2"
+                                            />
+                                            <path
+                                                d="M7 8V6a3 3 0 016 0v2"
+                                                stroke="#f999b7"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                            />
+                                        </svg>
+                                    </span>
+                                    Đổi mật khẩu
                                 </Link>
                                 <button
                                     className="account-dropdown-item meta-logout"
@@ -344,13 +445,22 @@ export default function Header() {
                 <nav
                     className="header-nav container"
                     aria-label="Điều hướng chính">
-                    <span className="menu-btn">
-                        <span className="menu-icon">☰</span>
-                        Danh mục sản phẩm
-                    </span>
-                    <Link href="/products">Chính sách đổi trả</Link>
-                    <Link href="/news">Hệ thống cửa hàng</Link>
-                    <Link href="/orders">Kiểm tra đơn hàng</Link>
+                    <div className="header-category-menu">
+                        <button
+                            type="button"
+                            className="menu-btn"
+                            aria-haspopup="true">
+                            <span className="menu-icon">☰</span>
+                            Danh mục sản phẩm
+                        </button>
+                        <div className="header-category-dropdown">
+                            <CategorySidebar showHeader={false} />
+                        </div>
+                    </div>
+                    <Link href="/chinh-sach-doi-tra">Chính sách đổi trả</Link>
+                    <Link href="/he-thong-cua-hang">Hệ thống cửa hàng</Link>
+                    <Link href="/review-my-pham">Review mỹ phẩm</Link>
+                    <Link href="/tin-tuc-luxberry">Tin tức Luxberry</Link>
                 </nav>
             </div>
         </header>

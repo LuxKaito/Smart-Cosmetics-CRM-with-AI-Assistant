@@ -1,4 +1,5 @@
 import { apiRequest } from "../lib/apiClient";
+import type { Voucher } from "../types/voucher";
 
 export type PaymentMethod = "COD" | "PAYOS";
 
@@ -34,6 +35,10 @@ export interface CheckoutSummary {
     items: CheckoutSummaryItem[];
     subtotal: number;
     discount: number;
+    itemDiscount?: number;
+    voucherDiscount?: number;
+    voucher?: Voucher | null;
+    availableVouchers?: Voucher[];
     shippingFee: number;
     total: number;
     shipping?: CheckoutShippingInfo;
@@ -57,11 +62,15 @@ export interface CreateOrderPayload {
 export interface OrderItem {
     _id: string;
     id?: string;
+    orderCode?: string;
     totalAmount: number;
+    subtotal?: number;
+    discount?: number;
+    shippingFee?: number;
     paymentMethod: PaymentMethod;
     paymentStatus: string;
     orderStatus: string;
-    items: CheckoutSummaryItem[];
+    items: OrderLineItem[];
     shippingAddress?: {
         fullName: string;
         phone: string;
@@ -70,16 +79,42 @@ export interface OrderItem {
         ward: string;
         addressLine: string;
     };
+    note?: string;
+    voucherCode?: string;
+    paymentFailureReason?: string;
+    paidAt?: string;
+    cancelledAt?: string;
     createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface OrderLineItem {
+    productId:
+        | string
+        | {
+              _id?: string;
+              id?: string;
+              slug?: string;
+          };
+    productNameSnapshot: string;
+    imageSnapshot?: string;
+    quantity: number;
+    priceSnapshot: number;
+    lineTotal: number;
 }
 
 export async function fetchCheckoutSummary(
     province?: string,
+    voucherCode?: string,
 ): Promise<CheckoutSummary> {
     const normalizedProvince = province?.trim() || undefined;
+    const normalizedVoucherCode = voucherCode?.trim() || undefined;
     return apiRequest<CheckoutSummary>({
         url: "/checkout/summary",
-        params: normalizedProvince ? { province: normalizedProvince } : undefined,
+        params: {
+            ...(normalizedProvince ? { province: normalizedProvince } : {}),
+            ...(normalizedVoucherCode ? { voucherCode: normalizedVoucherCode } : {}),
+        },
     });
 }
 
@@ -124,12 +159,6 @@ export async function createPayOSPaymentLink(orderId: string): Promise<{
         method: "POST",
         data: { orderId },
     });
-}
-
-// Compatibility wrappers for existing pages
-export async function fetchOrdersByEmail(email: string): Promise<OrderItem[]> {
-    void email;
-    return fetchMyOrders();
 }
 
 export async function cancelOrder(

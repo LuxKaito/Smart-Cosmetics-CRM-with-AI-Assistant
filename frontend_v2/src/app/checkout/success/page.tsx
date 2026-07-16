@@ -67,12 +67,13 @@ export default function CheckoutSuccessPage() {
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
                         <InfoCard
                             label="Mã đơn hàng"
-                            value={order?.id || order?._id || orderId || "--"}
+                            value={order?.orderCode || "--"}
                         />
                         <InfoCard
                             label="Tổng tiền"
                             value={
-                                order?.totalAmount
+                                order?.totalAmount !== undefined &&
+                                order?.totalAmount !== null
                                     ? `${order.totalAmount.toLocaleString("vi-VN")} đ`
                                     : "--"
                             }

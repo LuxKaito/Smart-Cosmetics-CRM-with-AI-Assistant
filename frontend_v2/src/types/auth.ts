@@ -1,9 +1,18 @@
-export interface AuthTokens {
-    accessToken: string;
-    refreshToken: string;
-}
+export type UserRole = "admin" | "staff" | "customer";
 
-export type UserRole = "admin" | "user";
+export interface ShippingAddress {
+    _id: string;
+    label: string;
+    fullName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    addressLine: string;
+    isDefault?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
 
 export interface User {
     _id?: string;
@@ -11,9 +20,17 @@ export interface User {
     name?: string;
     firstName?: string;
     lastName?: string;
+    avatar?: string;
+    phone?: string;
+    shippingAddresses?: ShippingAddress[];
+    savedProductIds?: string[];
     role?: UserRole;
+    department?: "sales" | "warehouse" | "support" | "marketing" | "";
+    permissions?: string[];
     isBlocked?: boolean;
     emailVerified?: boolean;
+    createdAt?: string;
+    lastLoginAt?: string;
 }
 
 export interface AuthPayload {
@@ -29,7 +46,6 @@ export interface RegisterPayload {
 
 export interface AuthResult {
     user?: User;
-    tokens?: AuthTokens;
     message?: string;
     mergedFromGuest?: boolean;
 }

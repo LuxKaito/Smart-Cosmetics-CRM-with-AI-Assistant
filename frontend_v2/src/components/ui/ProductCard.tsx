@@ -1,12 +1,19 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
     getDiscountPercent,
     getOriginalPrice,
     getSalePrice,
 } from "../../lib/pricing";
 import type { Product } from "../../types/product";
+import { useAuthStore } from "../../stores/authStore";
+import {
+    removeFavoriteProduct,
+    saveFavoriteProduct,
+} from "../../services/favoriteService";
 
 const uiSeeds = [
     {
@@ -92,6 +99,11 @@ function formatPrice(value: string | number | undefined | null) {
 
 export default function ProductCard({ item }: { item: Product }) {
     const productId = item._id || item.id;
+    const user = useAuthStore((state) => state.user);
+    const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
+    const isFavorite = Boolean(
+        productId && user?.savedProductIds?.includes(productId),
+    );
     const imageUrl =
         item.image ||
         item.image_url ||
@@ -104,6 +116,33 @@ export default function ProductCard({ item }: { item: Product }) {
     const discountPercent = resolveDiscountPercent(item);
     const hasDiscount = discountPercent > 0;
 
+    const handleFavoriteClick = async () => {
+        if (!productId) return;
+        if (!user) {
+            toast.error("Vui lòng đăng nhập để lưu sản phẩm yêu thích.");
+            return;
+        }
+
+        setIsUpdatingFavorite(true);
+        try {
+            if (isFavorite) {
+                await removeFavoriteProduct(productId);
+                toast.success("Đã xóa sản phẩm khỏi danh sách yêu thích.");
+            } else {
+                await saveFavoriteProduct(productId);
+                toast.success("Đã lưu sản phẩm yêu thích.");
+            }
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Không thể cập nhật sản phẩm yêu thích.",
+            );
+        } finally {
+            setIsUpdatingFavorite(false);
+        }
+    };
+
     return (
         <article className="product-card">
             <div className="product-top-row">
@@ -111,9 +150,30 @@ export default function ProductCard({ item }: { item: Product }) {
                     <span className="official-brand">{item.brand || "TK Beauty"}</span>
                     <span className="official-text">Chính hãng</span>
                 </div>
-                {hasDiscount ? (
-                    <span className="discount-badge">-{discountPercent}%</span>
-                ) : null}
+                <div className="product-top-actions">
+                    <button
+                        type="button"
+                        className={`favorite-button${isFavorite ? " is-active" : ""}`}
+                        onClick={handleFavoriteClick}
+                        disabled={isUpdatingFavorite || !productId}
+                        aria-label={
+                            isFavorite
+                                ? "Xóa khỏi sản phẩm yêu thích"
+                                : "Lưu sản phẩm yêu thích"
+                        }
+                        title={
+                            isFavorite
+                                ? "Xóa khỏi sản phẩm yêu thích"
+                                : "Lưu sản phẩm yêu thích"
+                        }>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 20.6 10.55 19.3C5.4 14.75 2 11.65 2 7.85 2 4.75 4.4 2.4 7.5 2.4c1.75 0 3.45.8 4.5 2.05A5.94 5.94 0 0 1 16.5 2.4c3.1 0 5.5 2.35 5.5 5.45 0 3.8-3.4 6.9-8.55 11.45L12 20.6Z" />
+                        </svg>
+                    </button>
+                    {hasDiscount ? (
+                        <span className="discount-badge">-{discountPercent}%</span>
+                    ) : null}
+                </div>
             </div>
 
             <Link href={`/products/${productId}`} className="product-link">

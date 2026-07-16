@@ -3,18 +3,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { useHomeData } from "../../hooks/useHomeData";
 import { fetchHomeProducts } from "../../services/productService";
+import { fetchPublicVouchers } from "../../services/voucherService";
 import type { Product } from "../../types/product";
 import Header from "./Header";
 import Footer from "./Footer";
-import CategorySidebar from "../ui/CategorySidebar";
 import HeroBanners from "../ui/HeroBanners";
 import CategoryIcons from "../ui/CategoryIcons";
 import CouponRow from "../ui/CouponRow";
 import FlashDeals from "../ui/FlashDeals";
 import BrandStrip from "../ui/BrandStrip";
-import NewsSection from "../ui/NewsSection";
-import FloatingActions from "../ui/FloatingActions";
 import SuggestedSection from "../ui/SuggestedSection";
+import EditorialSection from "../editorial/EditorialSection";
+import {
+    beautyReviewArticles,
+    luxberryNewsArticles,
+} from "../../data/editorialContent";
 
 const serviceItems: Array<{ title: string; text: string }> = [];
 
@@ -22,69 +25,51 @@ const cleanFeatureIcons = [
     {
         label: "Chăm sóc da",
         image: "/category-icons/Ch%C4%83m%20s%C3%B3c%20da.png",
+        href: "/products?category=Ch%C4%83m%20S%C3%B3c%20Da%20M%E1%BA%B7t&page=1",
     },
     {
         label: "Trang điểm",
         image: "/category-icons/Trang%20%C4%91i%E1%BB%83m.png",
+        href: "/products?category=Trang%20%C4%90i%E1%BB%83m&page=1",
     },
     {
         label: "Dưỡng trắng",
         image: "/category-icons/D%C6%B0%E1%BB%A1ng%20tr%E1%BA%AFng.png",
+        href: "/products?category=Ch%C4%83m%20S%C3%B3c%20Da%20M%E1%BA%B7t&subcategory=D%C6%B0%E1%BB%A1ng%20Tr%E1%BA%AFng&page=1",
     },
     {
         label: "Dưỡng ẩm",
         image: "/category-icons/D%C6%B0%E1%BB%A1ng%20%E1%BA%A9m.png",
+        href: "/products?category=Ch%C4%83m%20S%C3%B3c%20Da%20M%E1%BA%B7t&subcategory=D%C6%B0%E1%BB%A1ng%20%E1%BA%A8m&page=1",
     },
-    { label: "Son môi", image: "/category-icons/Son%20m%C3%B4i.png" },
+    {
+        label: "Son môi",
+        image: "/category-icons/Son%20m%C3%B4i.png",
+        href: "/products?category=Trang%20%C4%90i%E1%BB%83m&subcategory=Son%20M%C3%B4i&page=1",
+    },
     {
         label: "Chăm sóc tóc",
         image: "/category-icons/Ch%C4%83m%20s%C3%B3c%20t%C3%B3c.png",
+        href: "/products?category=Ch%C4%83m%20S%C3%B3c%20T%C3%B3c%20V%C3%A0%20Da%20%C4%90%E1%BA%A7u&page=1",
     },
     {
         label: "Bộ làm đẹp",
         image: "/category-icons/B%E1%BB%99%20l%C3%A0m%20%C4%91%E1%BA%B9p.png",
         highlight: true,
+        href: "/products?search=B%E1%BB%99%20l%C3%A0m%20%C4%91%E1%BA%B9p&page=1",
     },
     {
         label: "Tẩy tế bào chết",
         image: "/category-icons/T%E1%BA%A9y%20t%E1%BA%BF%20b%C3%A0o%20ch%E1%BA%BFt.png",
-    },
-];
-
-const cleanCoupons = [
-    { code: "BEAUTY10", text: "Giảm 10% cho đơn từ 500k" },
-    { code: "SKIN15", text: "Giảm 15% cho routine chăm sóc da" },
-    { code: "FREESHIP", text: "Miễn phí vận chuyển cho đơn từ 500k" },
-    { code: "NEW99K", text: "Giảm 99k cho khách hàng mới" },
-];
-
-const cleanNewsList = [
-    {
-        title: "Cách xây routine phục hồi da trong 7 ngày",
-        summary:
-            "Gợi ý các bước làm sạch, cấp ẩm và chống nắng cho làn da yếu.",
-    },
-    {
-        title: "Chọn kem chống nắng theo loại da",
-        summary: "Da dầu, da khô hay da nhạy cảm đều cần công thức khác nhau.",
-    },
-    {
-        title: "Makeup tự nhiên cho ngày bận rộn",
-        summary: "Những món cơ bản giúp lớp nền mỏng nhẹ và bền màu.",
-    },
-    {
-        title: "Dấu hiệu da cần đổi sản phẩm",
-        summary: "Nhận biết kích ứng, bí da và cách chuyển routine an toàn.",
+        href: "/products?search=T%E1%BA%A9y%20t%E1%BA%BF%20b%C3%A0o%20ch%E1%BA%BFt&page=1",
     },
 ];
 
 export default function HomePage() {
     const {
         featureIcons,
-        coupons,
         flashDeals,
         brandShowcase,
-        newsList,
         bestSellers,
         topSearches,
         homeProducts,
@@ -93,6 +78,10 @@ export default function HomePage() {
     const { data: remoteProducts = [] } = useQuery<Product[]>({
         queryKey: ["home-products"],
         queryFn: () => fetchHomeProducts(36),
+    });
+    const { data: publicVouchers = [] } = useQuery({
+        queryKey: ["public-vouchers"],
+        queryFn: () => fetchPublicVouchers(12),
     });
 
     const flashDealsData =
@@ -107,8 +96,7 @@ export default function HomePage() {
             <Header />
 
             <main className="main-content">
-                <section className="hero-layout container">
-                    <CategorySidebar />
+                <section className="hero-layout hero-layout--full container">
                     <HeroBanners />
                 </section>
 
@@ -134,9 +122,7 @@ export default function HomePage() {
                 </section>
 
                 <section className="container">
-                    <CouponRow
-                        coupons={cleanCoupons.length ? cleanCoupons : coupons}
-                    />
+                    <CouponRow coupons={publicVouchers} />
                 </section>
 
                 <section
@@ -186,14 +172,27 @@ export default function HomePage() {
                 </section>
 
                 <section className="container">
-                    <NewsSection
-                        news={cleanNewsList.length ? cleanNewsList : newsList}
+                    <EditorialSection
+                        title="Review mỹ phẩm"
+                        description="Gợi ý sản phẩm và routine phù hợp để bạn mua sắm dễ dàng hơn."
+                        articles={beautyReviewArticles}
+                        viewAllHref="/review-my-pham"
+                        articleBaseHref="/review-my-pham"
+                    />
+                </section>
+
+                <section className="container">
+                    <EditorialSection
+                        title="Tin tức LuxBerry"
+                        description="Cập nhật ưu đãi, chính sách và thông tin mới từ LuxBerry Beauty."
+                        articles={luxberryNewsArticles}
+                        viewAllHref="/tin-tuc-luxberry"
+                        articleBaseHref="/tin-tuc-luxberry"
                     />
                 </section>
             </main>
 
             <Footer />
-            <FloatingActions />
         </div>
     );
 }

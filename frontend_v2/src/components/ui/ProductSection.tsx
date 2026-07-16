@@ -297,7 +297,7 @@ export default function ProductSection({
                             type="button"
                             className="reset-filter-btn"
                             onClick={handleResetFilters}>
-                            Dat lai bo loc
+                            Đặt lại bộ lọc
                         </button>
                     </div>
                     {categories.length > 0 ? (
@@ -589,7 +589,7 @@ export default function ProductSection({
                         </>
                     ) : !hasVisibleProducts ? (
                         <div className="empty-note">
-                            Khong tim thay san pham phu hop voi bo loc da chon.
+                            Không tìm thấy sản phẩm phù hợp với bộ lọc đã chọn.
                         </div>
                     ) : (
                         <div className="product-grid">

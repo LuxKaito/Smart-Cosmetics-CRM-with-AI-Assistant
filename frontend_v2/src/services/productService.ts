@@ -73,6 +73,18 @@ const normalizeProduct = (item: Product | null): Product | null => {
         origin: resolvedOrigin,
         volume: resolvedVolume,
         skin_type: item.skin_type || source.skin_type || "",
+        category:
+            item.category ||
+            item.category_level_2 ||
+            item.category_level_1 ||
+            "",
+        subcategory:
+            item.subcategory ||
+            item.product_type ||
+            item.benefits ||
+            "",
+        usageInstructions:
+            item.usageInstructions || item.usage_instructions || "",
         image:
             item.image ||
             source.image_url ||
@@ -114,6 +126,7 @@ export async function fetchProducts(
         sort: query.sort || undefined,
         search: query.search?.trim() || undefined,
         category: query.category?.trim() || undefined,
+        subcategory: query.subcategory?.trim() || undefined,
         brand: query.brand?.trim() || undefined,
         skin_type: query.skin_type?.trim() || undefined,
         minPrice:
@@ -172,7 +185,7 @@ export async function fetchProductCategories(): Promise<{
 }> {
     try {
         const data = await apiRequest<{ categories: string[] }>({
-            url: "/categories",
+            url: "/products/categories",
         });
         return data;
     } catch {

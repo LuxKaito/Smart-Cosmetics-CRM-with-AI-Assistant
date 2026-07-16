@@ -20,6 +20,11 @@ interface MegaMenuProps {
     parentCategory: string;
 }
 
+interface CategorySidebarProps {
+    categories?: CategoryItem[];
+    showHeader?: boolean;
+}
+
 const defaultCategories = [
     {
         label: "Sức Khỏe - Làm Đẹp",
@@ -494,17 +499,20 @@ function MegaMenu({ columns, label, parentCategory }: MegaMenuProps) {
 
 export default function CategorySidebar({
     categories = defaultCategories as CategoryItem[],
-}) {
+    showHeader = true,
+}: CategorySidebarProps) {
     return (
         <aside className="category-sidebar">
-            <div className="category-sidebar-head">
-                <span className="category-sidebar-head-icon" aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
-                </span>
-                <span>Danh mục sản phẩm</span>
-            </div>
+            {showHeader ? (
+                <div className="category-sidebar-head">
+                    <span className="category-sidebar-head-icon" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                    </span>
+                    <span>Danh mục sản phẩm</span>
+                </div>
+            ) : null}
             <ul>
                 {categories.map((item) => (
                     <li

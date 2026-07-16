@@ -33,7 +33,7 @@ async function refreshAccessToken(): Promise<boolean> {
             .then((response) => {
                 if (!response.data?.success) {
                     throw new ApiError(
-                        response.data?.message || "Token refresh failed",
+                        response.data?.message || "Không thể làm mới phiên đăng nhập.",
                         401,
                         response.data,
                     );
@@ -75,7 +75,7 @@ apiClient.interceptors.response.use(
         }
 
         const message =
-            error.response?.data?.message || error.message || "Request failed";
+            error.response?.data?.message || error.message || "Yêu cầu không thành công.";
         return Promise.reject(
             new ApiError(message, status, error.response?.data),
         );
@@ -84,7 +84,7 @@ apiClient.interceptors.response.use(
 
 function normalizeResponse<T>(response: ApiResponse<T>): T {
     if (!response.success) {
-        throw new ApiError(response.message || "Request failed", 400, response);
+        throw new ApiError(response.message || "Yêu cầu không thành công.", 400, response);
     }
     return response.data;
 }

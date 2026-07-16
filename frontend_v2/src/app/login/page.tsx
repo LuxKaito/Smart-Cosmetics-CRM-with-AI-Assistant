@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { z } from "zod";
@@ -57,9 +58,15 @@ export default function LoginPage() {
         router.prefetch(redirect || "/");
     }, [redirect, router]);
 
-    const handleGoogleSuccess = async () => {
+    const resolvePostLoginPath = (role?: string) => {
+        if (role === "admin") return "/admin/overview";
+        if (role === "staff") return "/staff";
+        return redirect || "/";
+    };
+
+    const handleGoogleSuccess = async (result?: { user?: { role?: string } }) => {
         await refreshCart();
-        router.replace(redirect);
+        router.replace(resolvePostLoginPath(result?.user?.role));
     };
 
     const onSubmit = async (values: z.infer<typeof loginSchema>) => {
@@ -73,7 +80,7 @@ export default function LoginPage() {
 
             toast.success(result?.message || "Đăng nhập thành công.");
             await refreshCart();
-            router.push(redirect);
+            router.replace(resolvePostLoginPath(result?.user?.role));
         } catch (error) {
             const message = getErrorMessage(error, "Đăng nhập thất bại.");
             const needVerify = /xác thực email|xac thuc email/i.test(message);
@@ -221,24 +228,15 @@ export default function LoginPage() {
                         </form>
                     </div>
 
-                    <aside className="rounded-3xl bg-[#FFF7FA] p-6">
-                        <h2 className="text-2xl font-bold text-[#2B1B24]">
-                            Đăng nhập để trải nghiệm trọn vẹn
-                        </h2>
-                        <ul className="mt-4 space-y-3 text-sm text-[#7A6A70]">
-                            <li className="rounded-2xl bg-white p-4">
-                                Theo dõi đơn hàng theo thời gian thực.
-                            </li>
-                            <li className="rounded-2xl bg-white p-4">
-                                Quản lý danh sách sản phẩm yêu thích nhanh chóng.
-                            </li>
-                            <li className="rounded-2xl bg-white p-4">
-                                Nhận ưu đãi và voucher cá nhân hóa.
-                            </li>
-                            <li className="rounded-2xl bg-white p-4">
-                                Tiếp tục thanh toán ngay với giỏ hàng đã lưu.
-                            </li>
-                        </ul>
+                    <aside className="overflow-hidden rounded-3xl bg-[#FFF7FA]">
+                        <Image
+                            src="/img/img_login.png"
+                            alt="Ưu đãi dành cho thành viên LuxBerry khi đăng nhập"
+                            width={1024}
+                            height={1536}
+                            priority
+                            className="h-full max-h-[780px] min-h-[420px] w-full object-cover object-top"
+                        />
                     </aside>
                 </section>
             </main>

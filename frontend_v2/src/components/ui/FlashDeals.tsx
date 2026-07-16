@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Product } from "../../types/product";
 import ProductCard, { enrichProducts } from "./ProductCard";
 
@@ -14,11 +14,12 @@ interface FlashDealsProps {
 
 export default function FlashDeals({
     deals,
-    title = "Flash Deals",
+    title = "Flash Sale",
     showTimer = true,
     variant = "hot",
 }: FlashDealsProps) {
     const trackRef = useRef<HTMLDivElement | null>(null);
+    const [remainingMs, setRemainingMs] = useState(0);
     const enrichedDeals = useMemo(
         () =>
             enrichProducts(
@@ -27,6 +28,21 @@ export default function FlashDeals({
             ),
         [deals, title],
     );
+
+    useEffect(() => {
+        if (!showTimer) return;
+
+        const resolveRemaining = () => {
+            const now = new Date();
+            const endOfDay = new Date(now);
+            endOfDay.setHours(23, 59, 59, 999);
+            setRemainingMs(Math.max(0, endOfDay.getTime() - now.getTime()));
+        };
+
+        resolveRemaining();
+        const timer = window.setInterval(resolveRemaining, 1000);
+        return () => window.clearInterval(timer);
+    }, [showTimer]);
 
     if (enrichedDeals.length === 0) {
         return null;
@@ -53,6 +69,12 @@ export default function FlashDeals({
     };
 
     const sectionClassName = `flash-deals${variant === "plain" ? " is-plain" : ""}`;
+    const hours = Math.floor(remainingMs / 3600000);
+    const minutes = Math.floor((remainingMs % 3600000) / 60000);
+    const seconds = Math.floor((remainingMs % 60000) / 1000);
+    const timerParts = [hours, minutes, seconds].map((value) =>
+        String(value).padStart(2, "0"),
+    );
 
     return (
         <section className={sectionClassName} aria-label={title}>
@@ -63,11 +85,11 @@ export default function FlashDeals({
                         <div
                             className="flash-deals-timer"
                             aria-label="Thời gian đếm ngược">
-                            <span>01</span>
+                            <span>{timerParts[0]}</span>
                             <span>:</span>
-                            <span>34</span>
+                            <span>{timerParts[1]}</span>
                             <span>:</span>
-                            <span>47</span>
+                            <span>{timerParts[2]}</span>
                         </div>
                     ) : null}
                 </div>
