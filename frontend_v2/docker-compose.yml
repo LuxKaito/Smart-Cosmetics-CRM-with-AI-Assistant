@@ -1,0 +1,23 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+        NEXT_PUBLIC_AI_CHAT_URL: ${NEXT_PUBLIC_AI_CHAT_URL:-http://localhost:8000/chat}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+        NEXT_PUBLIC_VIETMAP_API_KEY: ${NEXT_PUBLIC_VIETMAP_API_KEY:-}
+    container_name: cosmetics_frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      API_INTERNAL_URL: http://host.docker.internal:5000
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

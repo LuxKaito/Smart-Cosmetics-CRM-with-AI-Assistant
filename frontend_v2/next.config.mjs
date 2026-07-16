@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    output: "standalone",
     images: {
         remotePatterns: [
             {
@@ -18,6 +19,11 @@ const nextConfig = {
             {
                 protocol: "https",
                 hostname: "media.hcdn.vn",
+                pathname: "/**",
+            },
+            {
+                protocol: "https",
+                hostname: "i.pravatar.cc",
                 pathname: "/**",
             },
         ],
