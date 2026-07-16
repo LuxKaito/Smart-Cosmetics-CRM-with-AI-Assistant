@@ -18,6 +18,7 @@ interface ChatMessage {
     id: string;
     role: "user" | "bot";
     text: string;
+    createdAt: string;
     products?: ChatbotProduct[];
 }
 
@@ -26,7 +27,8 @@ export function useChatbot() {
         {
             id: "intro",
             role: "bot",
-            text: "Xin chao! Toi co the goi y san pham phu hop cho ban.",
+            text: "Xin chào, LuxBerry có thể giúp bạn chọn sản phẩm chăm sóc da phù hợp hôm nay.",
+            createdAt: new Date().toISOString(),
         },
     ]);
     const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +54,7 @@ export function useChatbot() {
             id: `user-${Date.now()}`,
             role: "user",
             text,
+            createdAt: new Date().toISOString(),
         };
 
         setMessages((prev) => [...prev, userMessage]);
@@ -68,13 +71,16 @@ export function useChatbot() {
             const botMessage: ChatMessage = {
                 id: `bot-${Date.now()}`,
                 role: "bot",
-                text: response.answer || "Toi chua tim duoc thong tin phu hop.",
+                text:
+                    response.answer ||
+                    "Mình chưa tìm được thông tin phù hợp, bạn mô tả thêm loại da hoặc nhu cầu nhé.",
+                createdAt: new Date().toISOString(),
                 products: response.products || [],
             };
             setMessages((prev) => [...prev, botMessage]);
         } catch (err) {
             setError(
-                err instanceof Error ? err.message : "Chatbot dang gap loi.",
+                err instanceof Error ? err.message : "Chatbot đang gặp lỗi.",
             );
         } finally {
             setIsLoading(false);

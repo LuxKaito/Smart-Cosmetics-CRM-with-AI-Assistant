@@ -6,13 +6,20 @@ import ChatbotWidget from "./ChatbotWidget";
 
 export default function ChatbotPage() {
     return (
-        <div className="page-shell">
+        <div className="page-shell bg-[#FFF7FA]">
             <Header />
-            <main className="main-content container chatbot-page-shell">
-                <section className="chatbot-page-header">
-                    <p className="section-kicker">Tro ly AI</p>
-                    <h1>Chatbot ho tro mua sam</h1>
-                    <p>Dat cau hoi de nhan goi y san pham phu hop nhat.</p>
+            <main className="container grid gap-5 py-8">
+                <section className="max-w-2xl">
+                    <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#F999B7]">
+                        Trợ lý AI
+                    </p>
+                    <h1 className="mt-2 text-3xl font-bold text-[#2B1B24]">
+                        LuxBerry Assistant
+                    </h1>
+                    <p className="mt-2 text-sm text-[#7A6A70]">
+                        Đặt câu hỏi để nhận gợi ý sản phẩm phù hợp với làn da
+                        và nhu cầu mua sắm của bạn.
+                    </p>
                 </section>
                 <ChatbotWidget variant="page" />
             </main>
