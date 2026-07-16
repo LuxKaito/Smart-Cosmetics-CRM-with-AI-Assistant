@@ -15,6 +15,8 @@ const run = async () => {
   const existing = await User.findOne({ email }).select('+passwordHash');
   if (existing) {
     existing.role = ROLES.ADMIN;
+    existing.emailVerified = true;
+    existing.isBlocked = false;
     if (!existing.passwordHash) existing.passwordHash = await passwordService.hash(password);
     await existing.save();
     logger.info('Existing user promoted to admin', { email });
@@ -23,7 +25,9 @@ const run = async () => {
       email,
       name: 'System Admin',
       passwordHash: await passwordService.hash(password),
-      role: ROLES.ADMIN
+      role: ROLES.ADMIN,
+      emailVerified: true,
+      isBlocked: false
     });
     logger.info('Admin user created', { email });
   }

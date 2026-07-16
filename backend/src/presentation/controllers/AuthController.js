@@ -59,6 +59,7 @@ class AuthController {
   logout = async (req, res) => {
     const result = await this.authService.logout(req.user._id);
     this.clearAuthCookies(res);
+    this.clearGuestCartCookie(res);
     return success(res, result, 'Logout successfully');
   };
 
@@ -69,6 +70,45 @@ class AuthController {
       req.body.newPassword
     );
     return success(res, result, 'Password changed successfully');
+  };
+
+  updateProfile = async (req, res) => {
+    const result = await this.authService.updateProfile(req.user._id, req.body);
+    return success(res, result, 'Profile updated successfully');
+  };
+
+  addShippingAddress = async (req, res) => {
+    const result = await this.authService.addShippingAddress(req.user._id, req.body);
+    return success(res, result, 'Shipping address added successfully', 201);
+  };
+
+  updateShippingAddress = async (req, res) => {
+    const result = await this.authService.updateShippingAddress(
+      req.user._id,
+      req.params.addressId,
+      req.body
+    );
+    return success(res, result, 'Shipping address updated successfully');
+  };
+
+  deleteShippingAddress = async (req, res) => {
+    const result = await this.authService.deleteShippingAddress(req.user._id, req.params.addressId);
+    return success(res, result, 'Shipping address deleted successfully');
+  };
+
+  listFavoriteProducts = async (req, res) => {
+    const result = await this.authService.listFavoriteProducts(req.user._id);
+    return success(res, result, 'Đã tải danh sách sản phẩm yêu thích.');
+  };
+
+  saveFavoriteProduct = async (req, res) => {
+    const result = await this.authService.saveFavoriteProduct(req.user._id, req.params.productId);
+    return success(res, result, 'Đã lưu sản phẩm yêu thích.');
+  };
+
+  removeFavoriteProduct = async (req, res) => {
+    const result = await this.authService.removeFavoriteProduct(req.user._id, req.params.productId);
+    return success(res, result, 'Đã xóa sản phẩm khỏi danh sách yêu thích.');
   };
 
   me = async (req, res) => {
@@ -119,6 +159,10 @@ class AuthController {
 
   clearGuestCartCookieIfMerged(res, result) {
     if (!result?.mergedFromGuest) return;
+    this.clearGuestCartCookie(res);
+  }
+
+  clearGuestCartCookie(res) {
     res.clearCookie(env.guestCartCookieName, {
       httpOnly: true,
       sameSite: 'lax',

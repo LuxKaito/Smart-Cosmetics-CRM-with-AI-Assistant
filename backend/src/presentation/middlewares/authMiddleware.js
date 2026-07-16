@@ -53,40 +53,22 @@ const optionalAuth = (tokenService, userRepository) => async (req, res, next) =>
 
 const protectRoute = (tokenService, userRepository) => verifyJWT(tokenService, userRepository);
 
-const checkRole = (...roles) => (req, res, next) => {
-  if (!req.user || !roles.includes(req.user.role)) {
-    return next(new AppError('Permission denied', 403, 'FORBIDDEN'));
-  }
+const requireAdmin = (req, res, next) => {
+  if (!req.user) return next(new AppError('Authentication required', 401, 'AUTH_REQUIRED'));
+  if (req.user.role !== ROLES.ADMIN) return next(new AppError('Admin access required', 403, 'FORBIDDEN'));
   return next();
 };
 
-const checkPermission = (...permissions) => (req, res, next) => {
+const requireRole = (...roles) => (req, res, next) => {
   if (!req.user) return next(new AppError('Authentication required', 401, 'AUTH_REQUIRED'));
-  if (req.user.role === ROLES.ADMIN) return next();
-
-  const permissionSet = new Set(req.user.permissions || []);
-  const allowed = permissions.some((permission) => permissionSet.has(permission));
-
-  if (!allowed) {
-    return next(new AppError('Permission denied', 403, 'FORBIDDEN'));
-  }
-
+  if (!roles.includes(req.user.role)) return next(new AppError('Permission denied', 403, 'FORBIDDEN'));
   return next();
-};
-
-const authorize = ({ roles = [], permissions = [] } = {}) => (req, res, next) => {
-  if (!req.user) return next(new AppError('Authentication required', 401, 'AUTH_REQUIRED'));
-  if (roles.length && roles.includes(req.user.role)) return next();
-  if (!permissions.length) return next(new AppError('Permission denied', 403, 'FORBIDDEN'));
-
-  return checkPermission(...permissions)(req, res, next);
 };
 
 module.exports = {
   verifyJWT,
   optionalAuth,
   protectRoute,
-  checkRole,
-  checkPermission,
-  authorize
+  requireAdmin,
+  requireRole
 };

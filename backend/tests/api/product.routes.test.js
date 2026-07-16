@@ -95,13 +95,36 @@ describe('Product routes', () => {
       .set('Authorization', 'Bearer valid-token')
       .send({
         name: 'Vitamin C Serum',
-        price: 250000,
+        sale_price: 250000,
         brand: 'Demo',
-        category: 'Serum'
+        product_type: 'Serum'
       });
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     expect(response.body.data.product.name).toBe('Vitamin C Serum');
+  });
+
+  it('rejects staff product creation outside the staff sales API', async () => {
+    const container = makeContainer();
+    container.userRepository.findById.mockResolvedValue({
+      _id: 'staff-1',
+      email: 'staff@example.com',
+      role: 'staff',
+      isBlocked: false,
+      permissions: ['product:create']
+    });
+    const app = createApp(container);
+
+    const response = await request(app)
+      .post('/api/v1/products')
+      .set('Authorization', 'Bearer valid-token')
+      .send({
+        name: 'Vitamin C Serum',
+        sale_price: 250000
+      });
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
   });
 });

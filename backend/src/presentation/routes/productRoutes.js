@@ -1,14 +1,12 @@
 const express = require('express');
 const asyncHandler = require('../../shared/utils/asyncHandler');
 const validate = require('../../shared/validators/validate');
-const ROLES = require('../../shared/constants/roles');
-const PERMISSIONS = require('../../shared/constants/permissions');
 const {
   productQuerySchema,
   productCreateSchema,
   productUpdateSchema
 } = require('../../application/dtos/productDtos');
-const { protectRoute, authorize } = require('../middlewares/authMiddleware');
+const { protectRoute, requireAdmin } = require('../middlewares/authMiddleware');
 const { uploadProductImages } = require('../middlewares/uploadMiddleware');
 
 const productRoutes = ({ productController, tokenService, userRepository }) => {
@@ -19,12 +17,13 @@ const productRoutes = ({ productController, tokenService, userRepository }) => {
   router.get('/categories/:category/products', validate(productQuerySchema, 'query'), asyncHandler(productController.listByCategory));
   router.get('/search', validate(productQuerySchema, 'query'), asyncHandler(productController.search));
   router.get('/', validate(productQuerySchema, 'query'), asyncHandler(productController.list));
-  router.get('/:id', asyncHandler(productController.detail));
+  router.get('/slug/:slug', asyncHandler(productController.detail));
+  router.get('/:slug', asyncHandler(productController.detail));
 
   router.post(
     '/',
     requireAuth,
-    authorize({ roles: [ROLES.ADMIN], permissions: [PERMISSIONS.PRODUCT_CREATE] }),
+    requireAdmin,
     uploadProductImages,
     normalizeBodyArrays,
     validate(productCreateSchema),
@@ -33,7 +32,7 @@ const productRoutes = ({ productController, tokenService, userRepository }) => {
   router.patch(
     '/:id',
     requireAuth,
-    authorize({ roles: [ROLES.ADMIN], permissions: [PERMISSIONS.PRODUCT_UPDATE] }),
+    requireAdmin,
     uploadProductImages,
     normalizeBodyArrays,
     validate(productUpdateSchema),
@@ -42,7 +41,7 @@ const productRoutes = ({ productController, tokenService, userRepository }) => {
   router.delete(
     '/:id',
     requireAuth,
-    authorize({ roles: [ROLES.ADMIN], permissions: [PERMISSIONS.PRODUCT_DELETE] }),
+    requireAdmin,
     asyncHandler(productController.remove)
   );
 

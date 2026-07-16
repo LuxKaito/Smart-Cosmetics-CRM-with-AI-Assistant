@@ -12,6 +12,7 @@ class OrderService {
     checkoutService,
     cartRepository,
     productRepository,
+    voucherRepository,
     payosClient,
     eventPublisher
   }) {
@@ -19,13 +20,15 @@ class OrderService {
     this.checkoutService = checkoutService;
     this.cartRepository = cartRepository;
     this.productRepository = productRepository;
+    this.voucherRepository = voucherRepository;
     this.payosClient = payosClient;
     this.eventPublisher = eventPublisher;
   }
 
   async createOrder(userId, payload) {
     const summary = await this.checkoutService.getSummary(userId, {
-      shippingAddress: payload.shippingAddress
+      shippingAddress: payload.shippingAddress,
+      voucherCode: payload.voucherCode
     });
 
     const baseOrderData = {
@@ -36,14 +39,11 @@ class OrderService {
         imageSnapshot: item.image,
         quantity: item.quantity,
         priceSnapshot: item.unitPrice,
-        lineTotal: item.lineTotal,
-        product: item.productId,
-        name: item.name,
-        price: item.unitPrice
+        lineTotal: item.lineTotal
       })),
       shippingAddress: payload.shippingAddress,
       note: payload.note || '',
-      voucherCode: payload.voucherCode || '',
+      voucherCode: summary.voucher?.code || '',
       subtotal: summary.subtotal,
       discount: summary.discount,
       shippingFee: summary.shippingFee,
@@ -59,6 +59,7 @@ class OrderService {
       });
 
       await this.reserveStock(order);
+      await this.markVoucherUsed(order.voucherCode);
       await this.cartRepository.clearItemsByOwner({ userId });
       await this.eventPublisher.publishOrderCreated({
         orderId: order._id.toString(),
@@ -88,7 +89,7 @@ class OrderService {
     const payment = await this.payosClient.createPaymentLink({
       orderCode: payosOrderCode,
       amount: pendingOrder.totalAmount,
-      description: `LuxBerry #${pendingOrder._id.toString().slice(-8)}`,
+      description: `LuxBerry #${pendingOrder.orderCode || pendingOrder._id.toString().slice(-8)}`,
       returnUrl: env.payosReturnUrl,
       cancelUrl: env.payosCancelUrl,
       items: pendingOrder.items.map((item) => ({
@@ -180,7 +181,7 @@ class OrderService {
     const payment = await this.payosClient.createPaymentLink({
       orderCode: payosOrderCode,
       amount: order.totalAmount,
-      description: `LuxBerry #${order._id.toString().slice(-8)}`,
+      description: `LuxBerry #${order.orderCode || order._id.toString().slice(-8)}`,
       returnUrl: env.payosReturnUrl,
       cancelUrl: env.payosCancelUrl,
       items: order.items.map((item) => ({
@@ -220,6 +221,7 @@ class OrderService {
     }
 
     await this.reserveStock(order);
+    await this.markVoucherUsed(order.voucherCode);
     const updatedOrder = await this.orderRepository.updateById(order._id, {
       paymentStatus: PAYMENT_STATUSES.PAID,
       orderStatus: ORDER_STATUSES.PENDING_CONFIRMATION,
@@ -280,6 +282,11 @@ class OrderService {
         );
       }
     }
+  }
+
+  async markVoucherUsed(voucherCode) {
+    if (!voucherCode || !this.voucherRepository) return;
+    await this.voucherRepository.incrementUsedCount(voucherCode);
   }
 }
 

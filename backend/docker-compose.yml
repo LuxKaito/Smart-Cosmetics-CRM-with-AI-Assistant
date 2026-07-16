@@ -18,6 +18,8 @@ services:
         condition: service_started
       rabbitmq:
         condition: service_healthy
+    networks:
+      - cosmetics_shared
 
   mongo:
     image: mongo:7
@@ -27,6 +29,8 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    networks:
+      - cosmetics_shared
 
   mongo-express:
     image: mongo-express
@@ -41,6 +45,8 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: admin123
     depends_on:
       - mongo
+    networks:
+      - cosmetics_shared
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -54,6 +60,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - cosmetics_shared
 
 volumes:
   mongo_data:
+
+networks:
+  cosmetics_shared:
+    name: cosmetics_shared_network

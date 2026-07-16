@@ -30,12 +30,6 @@ build/
 # testing
 coverage/
 
-# docker volumes
-data/
-mongodb-data/
-rabbitmq-data/
-redis-data/
-
 # vscode
 .vscode/
 

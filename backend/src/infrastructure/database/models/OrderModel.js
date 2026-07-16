@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { generateOrderCode } = require('../../../shared/utils/orderCode');
 const {
   PAYMENT_METHOD_VALUES,
   PAYMENT_METHODS,
@@ -43,14 +44,7 @@ const orderItemSchema = new mongoose.Schema(
     selectedVariant: {
       type: mongoose.Schema.Types.Mixed,
       default: null
-    },
-    // Backward-compatible fields
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product'
-    },
-    name: String,
-    price: Number
+    }
   },
   { _id: false }
 );
@@ -69,6 +63,12 @@ const shippingAddressSchema = new mongoose.Schema(
 
 const orderSchema = new mongoose.Schema(
   {
+    orderCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: generateOrderCode
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -128,13 +128,6 @@ const orderSchema = new mongoose.Schema(
       default: ORDER_STATUSES.PENDING_CONFIRMATION,
       index: true
     },
-    // Backward-compatible status field for legacy admin dashboards
-    status: {
-      type: String,
-      enum: ['pending', 'paid', 'shipping', 'completed', 'cancelled'],
-      default: 'pending',
-      index: true
-    },
     payosOrderCode: {
       type: Number,
       sparse: true,
@@ -161,22 +154,8 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-orderSchema.index({ createdAt: 1, status: 1 });
+orderSchema.index({ createdAt: 1, orderStatus: 1 });
 orderSchema.index({ user: 1, createdAt: -1 });
-
-orderSchema.pre('validate', function syncLegacyStatus(next) {
-  if (this.orderStatus === ORDER_STATUSES.CANCELLED || this.paymentStatus === PAYMENT_STATUSES.CANCELLED) {
-    this.status = 'cancelled';
-    return next();
-  }
-  if (this.paymentStatus === PAYMENT_STATUSES.PAID) {
-    if (this.orderStatus === ORDER_STATUSES.DELIVERED) this.status = 'completed';
-    else if (this.orderStatus === ORDER_STATUSES.SHIPPING) this.status = 'shipping';
-    else this.status = 'paid';
-    return next();
-  }
-  this.status = 'pending';
-  return next();
-});
+orderSchema.index({ orderCode: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Order', orderSchema);

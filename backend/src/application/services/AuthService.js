@@ -5,8 +5,9 @@ const logger = require('../../shared/utils/logger');
 const { generateSecureToken, hashSha256 } = require('../../shared/utils/cryptoToken');
 
 class AuthService {
-  constructor({ userRepository, passwordService, tokenService, googleOAuthClient, eventPublisher, cartService }) {
+  constructor({ userRepository, productRepository, passwordService, tokenService, googleOAuthClient, eventPublisher, cartService }) {
     this.userRepository = userRepository;
+    this.productRepository = productRepository;
     this.passwordService = passwordService;
     this.tokenService = tokenService;
     this.googleOAuthClient = googleOAuthClient;
@@ -26,7 +27,7 @@ class AuthService {
       email: normalizedEmail,
       name,
       passwordHash,
-      role: ROLES.USER,
+      role: ROLES.CUSTOMER,
       emailVerified: false,
       emailVerificationTokenHash: verification.tokenHash,
       emailVerificationExpires: verification.expiresAt,
@@ -140,7 +141,7 @@ class AuthService {
         name: profile.name,
         avatar: profile.avatar,
         googleId: profile.googleId,
-        role: ROLES.USER,
+        role: ROLES.CUSTOMER,
         emailVerified: true,
         isBlocked: false,
         lastLoginAt: new Date()
@@ -217,6 +218,111 @@ class AuthService {
     return { passwordChanged: true, refreshTokenRevoked: true };
   }
 
+  async updateProfile(userId, profile) {
+    const user = await this.requireActiveUser(userId);
+    const updates = {};
+
+    if (profile.name !== undefined) updates.name = profile.name;
+    if (profile.phone !== undefined) updates.phone = profile.phone;
+
+    const updatedUser = await this.userRepository.updateById(user._id, updates);
+    return { user: toSafeUser(updatedUser) };
+  }
+
+  async addShippingAddress(userId, address) {
+    const user = await this.requireActiveUser(userId);
+    const addresses = toPlainAddresses(user.shippingAddresses);
+    const nextAddress = { ...address };
+
+    if (!addresses.length || nextAddress.isDefault) {
+      addresses.forEach((item) => {
+        item.isDefault = false;
+      });
+      nextAddress.isDefault = true;
+    }
+
+    const updatedUser = await this.userRepository.updateById(user._id, {
+      shippingAddresses: [...addresses, nextAddress]
+    });
+
+    return { addresses: toSafeUser(updatedUser).shippingAddresses || [] };
+  }
+
+  async updateShippingAddress(userId, addressId, address) {
+    const user = await this.requireActiveUser(userId);
+    const addresses = toPlainAddresses(user.shippingAddresses);
+    const index = addresses.findIndex((item) => String(item._id) === String(addressId));
+    if (index < 0) throw new AppError('Shipping address not found', 404, 'SHIPPING_ADDRESS_NOT_FOUND');
+
+    if (address.isDefault) {
+      addresses.forEach((item) => {
+        item.isDefault = false;
+      });
+    }
+
+    addresses[index] = { ...addresses[index], ...address };
+    const updatedUser = await this.userRepository.updateById(user._id, {
+      shippingAddresses: addresses
+    });
+
+    return { addresses: toSafeUser(updatedUser).shippingAddresses || [] };
+  }
+
+  async deleteShippingAddress(userId, addressId) {
+    const user = await this.requireActiveUser(userId);
+    const addresses = toPlainAddresses(user.shippingAddresses);
+    const index = addresses.findIndex((item) => String(item._id) === String(addressId));
+    if (index < 0) throw new AppError('Shipping address not found', 404, 'SHIPPING_ADDRESS_NOT_FOUND');
+
+    const [removed] = addresses.splice(index, 1);
+    if (removed.isDefault && addresses.length) addresses[0].isDefault = true;
+
+    const updatedUser = await this.userRepository.updateById(user._id, {
+      shippingAddresses: addresses
+    });
+
+    return { addresses: toSafeUser(updatedUser).shippingAddresses || [] };
+  }
+
+  async listFavoriteProducts(userId) {
+    await this.requireActiveUser(userId);
+    const savedProductIds = await this.userRepository.getSavedProductIds(userId);
+    const products = await this.productRepository.findByIds(savedProductIds);
+    const productsById = new Map(products.map((product) => [String(product._id), product]));
+    const items = savedProductIds
+      .map((productId) => productsById.get(String(productId)))
+      .filter((product) => product?.isActive !== false);
+
+    return {
+      items,
+      savedProductIds: savedProductIds.map(String)
+    };
+  }
+
+  async saveFavoriteProduct(userId, productId) {
+    await this.requireActiveUser(userId);
+    const product = await this.productRepository.findById(productId);
+    if (!product || product.isActive === false) {
+      throw new AppError('Không tìm thấy sản phẩm.', 404, 'PRODUCT_NOT_FOUND');
+    }
+
+    const updatedUser = await this.userRepository.addSavedProductId(userId, productId);
+    return { savedProductIds: toStringIds(updatedUser.savedProductIds) };
+  }
+
+  async removeFavoriteProduct(userId, productId) {
+    await this.requireActiveUser(userId);
+    const updatedUser = await this.userRepository.removeSavedProductId(userId, productId);
+    return { savedProductIds: toStringIds(updatedUser.savedProductIds) };
+  }
+
+  async requireActiveUser(userId) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+    if (user.isBlocked) throw new AppError('User account is blocked', 403, 'USER_BLOCKED');
+    return user;
+  }
+
   async issueTokens(user) {
     const accessToken = this.tokenService.signAccessToken(user);
     const refreshToken = this.tokenService.signRefreshToken(user);
@@ -245,5 +351,12 @@ class AuthService {
     return `${env.frontendBaseUrl}/verify-email?token=${encodeURIComponent(token)}`;
   }
 }
+
+const toSafeUser = (user) => (user?.toSafeObject ? user.toSafeObject() : user);
+
+const toPlainAddresses = (addresses = []) =>
+  addresses.map((address) => (address?.toObject ? address.toObject() : { ...address }));
+
+const toStringIds = (ids = []) => ids.map(String);
 
 module.exports = AuthService;

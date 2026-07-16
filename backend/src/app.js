@@ -11,9 +11,12 @@ const authRoutes = require('./presentation/routes/authRoutes');
 const productRoutes = require('./presentation/routes/productRoutes');
 const cartRoutes = require('./presentation/routes/cartRoutes');
 const adminRoutes = require('./presentation/routes/adminRoutes');
+const staffRoutes = require('./presentation/routes/staffRoutes');
 const checkoutRoutes = require('./presentation/routes/checkoutRoutes');
 const orderRoutes = require('./presentation/routes/orderRoutes');
 const paymentRoutes = require('./presentation/routes/paymentRoutes');
+const voucherRoutes = require('./presentation/routes/voucherRoutes');
+const reviewRoutes = require('./presentation/routes/reviewRoutes');
 const { success } = require('./shared/utils/apiResponse');
 const { notFound, errorHandler } = require('./presentation/middlewares/errorMiddleware');
 
@@ -45,9 +48,18 @@ const createApp = (container = buildContainer()) => {
   app.use(`${env.apiPrefix}/products`, productRoutes(container));
   app.use(`${env.apiPrefix}/cart`, cartRoutes(container));
   app.use(`${env.apiPrefix}/admin`, adminRoutes(container));
+  if (container.staffController) {
+    app.use(`${env.apiPrefix}/staff`, staffRoutes(container));
+  }
   app.use(`${env.apiPrefix}/checkout`, checkoutRoutes(container));
   app.use(`${env.apiPrefix}/orders`, orderRoutes(container));
   app.use(`${env.apiPrefix}/payments`, paymentRoutes(container));
+  if (container.voucherController) {
+    app.use(`${env.apiPrefix}/vouchers`, voucherRoutes(container));
+  }
+  if (container.reviewController) {
+    app.use(`${env.apiPrefix}/reviews`, reviewRoutes(container));
+  }
 
   app.use(notFound);
   app.use(errorHandler);

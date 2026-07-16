@@ -5,7 +5,6 @@ const User = require('../infrastructure/database/models/UserModel');
 const Product = require('../infrastructure/database/models/ProductModel');
 const Cart = require('../infrastructure/database/models/CartModel');
 const ROLES = require('../shared/constants/roles');
-const PERMISSIONS = require('../shared/constants/permissions');
 
 const run = async () => {
   await mongoose.connect(env.mongoUri);
@@ -35,7 +34,7 @@ const run = async () => {
         name: 'Staff Demo',
         role: ROLES.STAFF,
         isBlocked: false,
-        permissions: [PERMISSIONS.PRODUCT_CREATE, PERMISSIONS.PRODUCT_UPDATE],
+        permissions: [],
         passwordHash: staffPasswordHash
       }
     },
@@ -59,7 +58,7 @@ const run = async () => {
           {
             product: product._id,
             quantity: 2,
-            priceSnapshot: product.price || product.sale_price || 0
+            priceSnapshot: product.sale_price || 0
           }
         ]
       }
@@ -77,7 +76,7 @@ const run = async () => {
           {
             product: product._id,
             quantity: 1,
-            priceSnapshot: product.price || product.sale_price || 0
+            priceSnapshot: product.sale_price || 0
           }
         ]
       }
@@ -88,7 +87,7 @@ const run = async () => {
   console.log('[seed:samples] Done');
   console.log('customer email: customer1@example.com | password: Customer@123');
   console.log('staff email: staff1@example.com | password: Staff@123');
-  console.log('staff permissions:', [PERMISSIONS.PRODUCT_CREATE, PERMISSIONS.PRODUCT_UPDATE].join(', '));
+  console.log('staff scope: sales orders and customers');
   console.log('guest id sample:', 'guest-demo-0001');
   console.log('sample product id:', product._id.toString());
 

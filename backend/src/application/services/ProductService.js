@@ -65,7 +65,7 @@ class ProductService {
   }
 }
 
-const normalizeProductInput = (data) => {
+function normalizeProductInput(data) {
   if (!data || typeof data !== 'object') return data;
 
   const next = { ...data };
@@ -74,75 +74,58 @@ const normalizeProductInput = (data) => {
   if (next.product_name_en && !next.name) next.name = next.product_name_en;
   if (next.name && !next.product_name_vn) next.product_name_vn = next.name;
 
-  const salePrice = toOptionalNumber(next.sale_price ?? next.salePrice ?? next.price);
-  const originalPrice = resolveOriginalPrice(
-    [next.original_price, next.originalPrice, next.oldPrice, next.regular_price],
-    salePrice ?? 0
-  );
+  const salePrice = toOptionalNumber(next.sale_price);
+  const originalPrice = resolveOriginalPrice([next.original_price], salePrice ?? 0);
 
   if (salePrice !== null) next.sale_price = salePrice;
-  if (originalPrice !== null) {
+  if (Object.prototype.hasOwnProperty.call(next, 'original_price')) {
     next.original_price = originalPrice;
-  } else {
-    delete next.original_price;
   }
 
-  delete next.price;
-  delete next.salePrice;
-  delete next.originalPrice;
-  delete next.oldPrice;
-  delete next.regular_price;
-
   if (next.image_url && !next.images) next.images = [next.image_url];
-  if (next.images && Array.isArray(next.images)) {
+  if (Array.isArray(next.images)) {
     next.images = [...new Set(next.images.map((image) => String(image || '').trim()).filter(Boolean))];
     if (!next.image_url && next.images.length) next.image_url = next.images[0];
+  }
+
+  if (next.category && !next.category_level_2) next.category_level_2 = next.category;
+  if (next.subcategory && !next.benefits) next.benefits = next.subcategory;
+  if (next.usageInstructions && !next.usage_instructions) {
+    next.usage_instructions = next.usageInstructions;
   }
 
   if (typeof next.categories === 'string') {
     next.categories = [next.categories];
   }
 
-  if (next.category && !next.categories) {
-    next.categories = [next.category];
+  if (Array.isArray(next.categories)) {
+    const categories = next.categories.map((category) => String(category || '').trim()).filter(Boolean);
+    if (!next.category_level_1 && categories[0]) next.category_level_1 = categories[0];
+    if (!next.category_level_2 && categories[1]) next.category_level_2 = categories[1];
+    if (!next.benefits && categories[2]) next.benefits = categories[2];
+    if (!next.product_type && categories[3]) next.product_type = categories[3];
   }
 
-  if (next.subcategory) {
-    next.categories = next.categories || [];
-    if (!next.categories.includes(next.subcategory)) next.categories.push(next.subcategory);
-  }
-
-  if (next.categories && Array.isArray(next.categories)) {
-    next.categories = [...new Set(next.categories.map((category) => String(category || '').trim()).filter(Boolean))];
-    if (!next.category && next.categories.length) next.category = next.categories[0];
-    if (!next.subcategory && next.categories.length > 1) next.subcategory = next.categories[1];
-  }
+  delete next.category;
+  delete next.subcategory;
+  delete next.categories;
+  delete next.usageInstructions;
 
   return next;
-};
+}
 
-const toCatalogProduct = (product) => {
-  const sourceRaw = product && product.toObject ? product.toObject() : { ...product };
-  const {
-    price: legacyPrice,
-    salePrice: legacySalePrice,
-    originalPrice: legacyOriginalPrice,
-    oldPrice: legacyOldPrice,
-    regular_price: legacyRegularPrice,
-    ...source
-  } = sourceRaw;
-  const categories = Array.isArray(source.categories) ? source.categories.filter(Boolean) : [];
+function toCatalogProduct(product) {
+  const source = product && product.toObject ? product.toObject() : { ...product };
+  const categories = [
+    source.category_level_1,
+    source.category_level_2,
+    source.benefits,
+    source.product_type
+  ].filter(Boolean);
   const images = Array.isArray(source.images) ? source.images.filter(Boolean) : [];
   const description = source.description || '';
-  const salePrice = toNonNegativeNumber(source.sale_price ?? legacySalePrice ?? legacyPrice, 0);
-  const fallbackOriginalFromPrice =
-    (source.sale_price !== undefined || legacySalePrice !== undefined) && legacyPrice !== undefined
-      ? toOptionalNumber(legacyPrice)
-      : null;
-  const originalPrice = resolveOriginalPrice(
-    [source.original_price, legacyOriginalPrice, legacyOldPrice, legacyRegularPrice, fallbackOriginalFromPrice],
-    salePrice
-  );
+  const salePrice = toNonNegativeNumber(source.sale_price, 0);
+  const originalPrice = resolveOriginalPrice([source.original_price], salePrice);
   const discountPercent = originalPrice ? Math.round(((originalPrice - salePrice) / originalPrice) * 100) : 0;
   const origin = normalizeText(source.origin) || extractLabelFromDescription(description, ['origin', 'xuat xu']);
   const volume = normalizeText(source.volume) || extractLabelFromDescription(description, ['volume', 'dung tich']);
@@ -163,31 +146,32 @@ const toCatalogProduct = (product) => {
     review_count: Number.isFinite(Number(source.review_count)) ? Number(source.review_count) : 0,
     qa_count: Number.isFinite(Number(source.qa_count)) ? Number(source.qa_count) : 0,
     description,
-    category: source.category || categories[0] || '',
-    subcategory: source.subcategory || categories[1] || '',
+    category: source.category_level_2 || source.category_level_1 || '',
+    subcategory: source.product_type || source.benefits || '',
     categories,
-    images
+    images,
+    usageInstructions: source.usage_instructions || ''
   };
 
   normalized.name = normalized.name || normalized.product_name_vn || normalized.product_name_en;
 
   return normalized;
-};
+}
 
-const toNonNegativeNumber = (value, fallback = 0) => {
+function toNonNegativeNumber(value, fallback = 0) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric < 0) return fallback;
   return numeric;
-};
+}
 
-const toOptionalNumber = (value) => {
+function toOptionalNumber(value) {
   if (value === undefined || value === null || value === '') return null;
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric < 0) return null;
   return numeric;
-};
+}
 
-const resolveOriginalPrice = (candidates = [], salePrice = 0) => {
+function resolveOriginalPrice(candidates = [], salePrice = 0) {
   const validCandidates = candidates
     .map((candidate) => toOptionalNumber(candidate))
     .filter((candidate) => candidate !== null && candidate > 0);
@@ -195,17 +179,20 @@ const resolveOriginalPrice = (candidates = [], salePrice = 0) => {
   if (!validCandidates.length) return null;
   const original = Math.max(...validCandidates);
   return original > salePrice ? original : null;
-};
+}
 
-const normalizeText = (value) => String(value || '').trim();
+function normalizeText(value) {
+  return String(value || '').trim();
+}
 
-const normalizeSearchText = (value) =>
-  normalizeText(value)
+function normalizeSearchText(value) {
+  return normalizeText(value)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
+}
 
-const extractLabelFromDescription = (description, labels = []) => {
+function extractLabelFromDescription(description, labels = []) {
   const normalizedLabels = labels.map((label) => normalizeSearchText(label));
   const lines = String(description || '')
     .split(/\r?\n/)
@@ -215,6 +202,7 @@ const extractLabelFromDescription = (description, labels = []) => {
   for (const line of lines) {
     const separatorIndex = line.indexOf(':');
     if (separatorIndex === -1) continue;
+
     const rawLabel = line.slice(0, separatorIndex).trim();
     const value = line.slice(separatorIndex + 1).trim();
     if (!value) continue;
@@ -225,6 +213,6 @@ const extractLabelFromDescription = (description, labels = []) => {
   }
 
   return '';
-};
+}
 
 module.exports = ProductService;

@@ -7,7 +7,8 @@ class CheckoutController {
 
   summary = async (req, res) => {
     const summary = await this.checkoutService.getSummary(req.user._id.toString(), {
-      province: req.query?.province
+      province: req.query?.province,
+      voucherCode: req.query?.voucherCode
     });
     return success(res, summary);
   };

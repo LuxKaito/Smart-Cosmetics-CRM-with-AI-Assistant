@@ -32,7 +32,7 @@ class ProductController {
   };
 
   detail = async (req, res) => {
-    const product = await this.productService.getById(req.params.id);
+    const product = await this.productService.getById(req.params.slug || req.params.id);
     return success(res, { product });
   };
 

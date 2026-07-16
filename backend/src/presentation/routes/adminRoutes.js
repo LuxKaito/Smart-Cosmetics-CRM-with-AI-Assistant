@@ -1,48 +1,88 @@
 const express = require('express');
 const asyncHandler = require('../../shared/utils/asyncHandler');
 const validate = require('../../shared/validators/validate');
-const ROLES = require('../../shared/constants/roles');
-const PERMISSIONS = require('../../shared/constants/permissions');
 const {
+  listProductsQuerySchema,
+  createProductSchema,
+  updateProductSchema,
+  overviewQuerySchema,
   listUsersQuerySchema,
+  createUserSchema,
+  updateUserSchema,
   assignRoleSchema,
   blockUserSchema,
-  assignPermissionsSchema
+  listVouchersQuerySchema,
+  createVoucherSchema,
+  updateVoucherSchema,
+  statisticsQuerySchema,
+  adminResourceParamSchema
 } = require('../../application/dtos/adminDtos');
-const { protectRoute, authorize } = require('../middlewares/authMiddleware');
+const { protectRoute, requireAdmin } = require('../middlewares/authMiddleware');
 
 const adminRoutes = ({ adminController, tokenService, userRepository }) => {
   const router = express.Router();
   router.use(protectRoute(tokenService, userRepository));
 
-  router.get(
-    '/dashboard',
-    authorize({ roles: [ROLES.ADMIN], permissions: [PERMISSIONS.DASHBOARD_VIEW] }),
-    asyncHandler(adminController.dashboard)
+  router.get('/overview', requireAdmin, validate(overviewQuerySchema, 'query'), asyncHandler(adminController.overview));
+  router.get('/statistics', requireAdmin, validate(statisticsQuerySchema, 'query'), asyncHandler(adminController.statistics));
+  router.get('/products', requireAdmin, validate(listProductsQuerySchema, 'query'), asyncHandler(adminController.listProducts));
+  router.post('/products', requireAdmin, validate(createProductSchema), asyncHandler(adminController.createProduct));
+  router.patch(
+    '/products/:id',
+    requireAdmin,
+    validate(adminResourceParamSchema, 'params'),
+    validate(updateProductSchema),
+    asyncHandler(adminController.updateProduct)
   );
+  router.delete(
+    '/products/:id',
+    requireAdmin,
+    validate(adminResourceParamSchema, 'params'),
+    asyncHandler(adminController.deleteProduct)
+  );
+
   router.get(
     '/users',
-    authorize({ roles: [ROLES.ADMIN], permissions: [PERMISSIONS.USER_LIST] }),
+    requireAdmin,
     validate(listUsersQuerySchema, 'query'),
     asyncHandler(adminController.listUsers)
   );
+  router.post('/users', requireAdmin, validate(createUserSchema), asyncHandler(adminController.createUser));
+  router.patch(
+    '/users/:id',
+    requireAdmin,
+    validate(adminResourceParamSchema, 'params'),
+    validate(updateUserSchema),
+    asyncHandler(adminController.updateUser)
+  );
   router.patch(
     '/users/:id/block',
-    authorize({ roles: [ROLES.ADMIN], permissions: [PERMISSIONS.USER_BLOCK] }),
+    requireAdmin,
+    validate(adminResourceParamSchema, 'params'),
     validate(blockUserSchema),
     asyncHandler(adminController.setUserBlocked)
   );
   router.patch(
     '/users/:id/role',
-    authorize({ roles: [ROLES.ADMIN], permissions: [PERMISSIONS.USER_ASSIGN_ROLE] }),
+    requireAdmin,
+    validate(adminResourceParamSchema, 'params'),
     validate(assignRoleSchema),
     asyncHandler(adminController.assignRole)
   );
+  router.get('/vouchers', requireAdmin, validate(listVouchersQuerySchema, 'query'), asyncHandler(adminController.listVouchers));
+  router.post('/vouchers', requireAdmin, validate(createVoucherSchema), asyncHandler(adminController.createVoucher));
   router.patch(
-    '/users/:id/permissions',
-    authorize({ roles: [ROLES.ADMIN], permissions: [PERMISSIONS.USER_ASSIGN_PERMISSION] }),
-    validate(assignPermissionsSchema),
-    asyncHandler(adminController.assignPermissions)
+    '/vouchers/:id',
+    requireAdmin,
+    validate(adminResourceParamSchema, 'params'),
+    validate(updateVoucherSchema),
+    asyncHandler(adminController.updateVoucher)
+  );
+  router.delete(
+    '/vouchers/:id',
+    requireAdmin,
+    validate(adminResourceParamSchema, 'params'),
+    asyncHandler(adminController.deleteVoucher)
   );
 
   return router;
