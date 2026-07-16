@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import AdminLayout from "../../components/admin/AdminLayout";
+import StaffLayout from "../../components/staff/StaffLayout";
 import { SERVER_API_PREFIX } from "../../lib/config";
 import type { User } from "../../types/auth";
 
-async function resolveAdminUser(): Promise<User | null> {
+async function resolveStaffUser(): Promise<User | null> {
     const cookieStore = await cookies();
     const response = await fetch(`${SERVER_API_PREFIX}/auth/me`, {
         method: "GET",
@@ -28,14 +28,14 @@ async function resolveAdminUser(): Promise<User | null> {
     return payload.data.user;
 }
 
-export default async function AdminRootLayout({
+export default async function StaffRootLayout({
     children,
 }: {
     children: ReactNode;
 }) {
-    const user = await resolveAdminUser();
-    if (!user) redirect("/login?redirect=/admin");
-    if (user.role !== "admin") redirect("/login?error=forbidden");
+    const user = await resolveStaffUser();
+    if (!user) redirect("/login?redirect=/staff");
+    if (user.role !== "staff") redirect("/login?error=forbidden");
 
-    return <AdminLayout currentUser={user}>{children}</AdminLayout>;
+    return <StaffLayout currentUser={user}>{children}</StaffLayout>;
 }
