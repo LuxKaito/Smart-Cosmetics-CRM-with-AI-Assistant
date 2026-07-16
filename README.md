@@ -76,7 +76,6 @@ The backend is the source of truth for product data. After importing the Excel c
 ├── RAG_LANGCHAIN_V4/     # FastAPI + LangChain Vietnamese product RAG service
 ├── DanhGiaChatBot.md     # RAG evaluation summary and artifacts
 ├── README.md             # English GitHub README
-└── README.vi.md          # Vietnamese README
 ```
 
 ## ⚙️ Prerequisites
