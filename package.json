@@ -3,14 +3,24 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "nx:reset": "nx reset",
+    "nx:run-many": "nx run-many",
+    "dev": "npm run nx:reset && npm run nx:run-many -- -t serve",
+    "dev-lite": "npm run dev -- --projects=bff"
   },
   "private": true,
   "dependencies": {
     "@nestjs/common": "11.1.28",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "11.1.28",
+    "@nestjs/microservices": "^11.2.1",
     "@nestjs/platform-express": "11.1.28",
+    "@nestjs/swagger": "^11.4.6",
     "axios": "1.19.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "express": "^5.2.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
@@ -30,6 +40,7 @@
     "@nx/webpack": "23.1.1",
     "@nx/workspace": "23.1.1",
     "@swc/helpers": "0.5.18",
+    "@types/express": "^4.17.25",
     "@types/jest": "30.0.0",
     "@types/node": "22.0.0",
     "eslint": "9.8.0",
@@ -53,6 +64,9 @@
   "overrides": {
     "nx": {
       "brace-expansion": "5.0.9"
+    },
+    "@nestjs/swagger": {
+      "js-yaml": "5.2.3"
     },
     "less": "4.8.1",
     "uuid": "11.1.1"
