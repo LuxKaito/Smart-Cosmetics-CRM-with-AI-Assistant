@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap");
-
 :root {
     --bg: #ffd4e1;
     --surface: #ffffff;
@@ -11,11 +9,8 @@
     --line: #eadfe7;
     --radius: 14px;
     --shadow: 0 10px 28px rgba(111, 49, 75, 0.1);
-    --font-body:
-        "Be Vietnam Pro", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --font-heading:
-        "Manrope", "Be Vietnam Pro", "Segoe UI", Roboto, Helvetica, Arial,
-        sans-serif;
+    --font-body: var(--font-site), "Segoe UI", Arial, sans-serif;
+    --font-heading: var(--font-body);
 }
 
 * {
@@ -967,8 +962,15 @@ h2 {
 
 .product-layout {
     display: grid;
-    grid-template-columns: 172px 1fr;
-    gap: 6px;
+    grid-template-columns: 280px 956px;
+    gap: 9px;
+}
+
+@media (max-width: 1300px) and (min-width: 1121px) {
+    .product-layout {
+        grid-template-columns: 172px minmax(0, 1fr);
+        gap: 6px;
+    }
 }
 
 .product-filter-panel {
@@ -1238,7 +1240,7 @@ h2 {
 .product-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(160px, 1fr));
-    gap: 16px;
+    gap: 10px;
 }
 
 .product-card {
@@ -2701,11 +2703,15 @@ h2 {
         font-size: 20px;
     }
 
-    .product-grid,
     .brand-showcase-body,
     .news-grid,
     .footer-grid {
         grid-template-columns: 1fr;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
     }
 
     .coupon-card {
@@ -2991,8 +2997,7 @@ h2 {
             100deg,
             rgba(255, 188, 53, 0.92),
             rgba(232, 63, 106, 0.84)
-        ),
-        url("/banner/banner1.png") center / cover no-repeat;
+        );
 }
 
 .promo-wide-content h2 {
@@ -4839,6 +4844,16 @@ body,
     object-fit: cover;
 }
 
+.hero-carousel-slide.is-active img {
+    animation: hero-banner-kenburns 5s cubic-bezier(0.2, 0.65, 0.3, 1) both;
+    will-change: transform;
+}
+
+@keyframes hero-banner-kenburns {
+    from { transform: scale(1); }
+    to { transform: scale(1.055); }
+}
+
 .hero-carousel-arrow {
     position: absolute;
     top: 50%;
@@ -4959,9 +4974,7 @@ body,
 
 .promo-wide-content {
     border-radius: 8px;
-    background:
-        linear-gradient(100deg, rgba(255, 212, 225, 0.86), rgba(249, 153, 183, 0.72)),
-        url("/banner/banner1.png") center / cover no-repeat;
+    background: linear-gradient(100deg, rgba(255, 212, 225, 0.86), rgba(249, 153, 183, 0.72));
 }
 
 .flash-deals {

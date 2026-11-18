@@ -51,7 +51,7 @@ export default function StaffSidebar({ isOpen, onClose }: StaffSidebarProps) {
                             <Store size={22} />
                         </span>
                         <span>
-                            <span className="block font-serif text-xl font-bold text-[#F999B7]">
+                            <span className="block font-sans text-xl font-bold text-[#F999B7]">
                                 LuxBerry
                             </span>
                             <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A6A70]">

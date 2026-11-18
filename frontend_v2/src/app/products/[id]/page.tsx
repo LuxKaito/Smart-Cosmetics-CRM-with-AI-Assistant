@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Header from "../../../components/layout/Header";
 import Footer from "../../../components/layout/Footer";
+import TactileButton from "../../../components/ui/TactileButton";
 import { addCartItem } from "../../../services/cartService";
 import { fetchProductById } from "../../../services/productService";
 import {
@@ -312,12 +313,23 @@ export default function ProductDetailPage() {
                             ) : null}
 
                             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                                <button type="button" disabled={soldOut} onClick={() => void handleAddToCart()} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#F999B7] bg-white font-bold text-[#D9366E] transition hover:bg-[#FFF7FA] disabled:cursor-not-allowed disabled:opacity-50">
+                                <TactileButton
+                                    type="button"
+                                    disabled={soldOut}
+                                    onClick={() => void handleAddToCart()}
+                                    fullWidth
+                                    variant="secondary"
+                                    className="h-12">
                                     <ShoppingBag size={18} /> Thêm vào giỏ
-                                </button>
-                                <button type="button" disabled={soldOut} onClick={() => void handleBuyNow()} className="h-12 rounded-xl bg-[#F999B7] font-bold text-white shadow-[0_12px_25px_rgba(249,153,183,0.28)] transition hover:bg-[#F47FA5] disabled:cursor-not-allowed disabled:opacity-50">
+                                </TactileButton>
+                                <TactileButton
+                                    type="button"
+                                    disabled={soldOut}
+                                    onClick={() => void handleBuyNow()}
+                                    fullWidth
+                                    className="h-12">
                                     Mua ngay
-                                </button>
+                                </TactileButton>
                             </div>
 
                             <div className="mt-6 grid gap-3 border-t border-[#F5E5EC] pt-5 sm:grid-cols-3">

@@ -10,7 +10,7 @@ export default function NewsSection({ news }: { news: NewsItem[] }) {
                 <div>
                     <h2>Bí quyết chăm sóc da</h2>
                 </div>
-                <a href="/news">Xem tất cả</a>
+                <a href="/news" className="view-more-action">Xem tất cả</a>
             </div>
             <div className="news-grid">
                 {news.map((item, index) => (
