@@ -10,8 +10,6 @@ import { useAuthStore } from "../../stores/authStore";
 import { useCartStore } from "../../stores/cartStore";
 import CategorySidebar from "../ui/CategorySidebar";
 
-const quickLinks = ["Kem chống nắng", "Son môi", "Bông tẩy trang", "Serum"];
-
 export default function Header() {
     const router = useRouter();
     const user = useAuthStore((state) => state.user);
@@ -117,15 +115,6 @@ export default function Header() {
                     <button type="submit" aria-label="Tìm">
                         <span className="search-icon" aria-hidden="true" />
                     </button>
-                    <div className="quick-links">
-                        {quickLinks.map((item) => (
-                            <Link
-                                key={item}
-                                href={`/products?search=${encodeURIComponent(item)}&page=1`}>
-                                {item}
-                            </Link>
-                        ))}
-                    </div>
                 </form>
 
                 <div className="header-meta">

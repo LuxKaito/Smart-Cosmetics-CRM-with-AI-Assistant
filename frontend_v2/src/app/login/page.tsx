@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import TactileButton from "../../components/ui/TactileButton";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 import {
     loginUser,
@@ -206,12 +207,12 @@ export default function LoginPage() {
                                 </button>
                             ) : null}
 
-                            <button
+                            <TactileButton
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="h-12 w-full rounded-2xl bg-[#F999B7] font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70">
+                                fullWidth>
                                 {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
-                            </button>
+                            </TactileButton>
 
                             <div className="flex items-center justify-between text-sm text-[#7A6A70]">
                                 <Link

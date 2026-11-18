@@ -5,6 +5,7 @@ interface CategoryItem {
     section?: boolean;
     submenu?: string;
     href?: string;
+    queryCategory?: string;
 }
 
 interface MegaMenuGroup {
@@ -25,443 +26,183 @@ interface CategorySidebarProps {
     showHeader?: boolean;
 }
 
-const defaultCategories = [
-    {
-        label: "Sức Khỏe - Làm Đẹp",
-        section: true,
-        href: "/products",
-    },
+function productsHref(filters: {
+    category?: string;
+    subcategory?: string;
+    search?: string;
+    sort?: string;
+}) {
+    const params = new URLSearchParams({ page: "1" });
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.set(key, value);
+    });
+    return `/products?${params.toString()}`;
+}
+
+const defaultCategories: CategoryItem[] = [
     {
         label: "Chăm Sóc Da Mặt",
         submenu: "faceCare",
-        href: "/products?category=Chăm Sóc Da Mặt",
-    },
-    {
-        label: "Trang Điểm",
-        submenu: "makeup",
-        href: "/products?category=Trang Điểm",
-    },
-    {
-        label: "Chăm Sóc Tóc Và Da Đầu",
-        submenu: "hairCare",
-        href: "/products?category=Chăm Sóc Tóc Và Da Đầu",
+        href: productsHref({ category: "Chăm Sóc Da Mặt" }),
     },
     {
         label: "Chăm Sóc Cơ Thể",
         submenu: "bodyCare",
-        href: "/products?category=Chăm Sóc Cơ Thể",
+        href: productsHref({ category: "Chăm Sóc Cơ Thể" }),
+    },
+    {
+        label: "Chăm Sóc Tóc Và Da Đầu",
+        submenu: "hairCare",
+        href: productsHref({ category: "Chăm Sóc Tóc Và Da Đầu" }),
     },
     {
         label: "Chăm Sóc Cá Nhân",
         submenu: "personalCare",
-        href: "/products?category=Chăm Sóc Cá Nhân",
+        href: productsHref({ category: "Chăm Sóc Cá Nhân" }),
     },
     {
-        label: "Nước Hoa",
-        submenu: "perfume",
-        href: "/products?category=Nước Hoa",
+        label: "Trang Điểm",
+        submenu: "makeup",
+        href: productsHref({ category: "Trang Điểm" }),
     },
+    { label: "Nước Hoa", href: productsHref({ category: "Nước Hoa" }) },
     {
-        label: "Thực Phẩm Chức Năng",
-        submenu: "supplement",
-        href: "/products?category=Thực Phẩm Chức Năng",
+        label: "Sản Phẩm Bán Chạy",
+        href: productsHref({ sort: "-soldCount" }),
     },
 ];
 
-// Mega menu columns for 'Nước Hoa'
-const perfumeColumns = [
+const faceCareColumns: MegaMenuColumn[] = [
     [
         {
-            title: "Nước Hoa Hàng Hiệu",
-            items: [
-                "Calvin Klein",
-                "Carolina Herrera",
-                "Chloé",
-                "Coach",
-                "Dolce & Gabbana",
-                "Issey Miyake",
-                "Lancôme",
-                "Marc Jacobs",
-                "Montblanc",
-                "Moschino",
-                "Narciso Rodriguez",
-                "Paco Rabanne",
-                "Versace",
-                "Yves Saint Laurent",
-            ],
-        },
-    ],
-    [
-        {
-            title: "Nước Hoa Giá Mềm",
-            items: [
-                "Armaf",
-                "De Memoria",
-                "Diamond",
-                "Gennie",
-                "Gota",
-                "Laura Anne",
-                "Panier Des Sens",
-                "Tommy",
-            ],
-        },
-        {
-            title: "Nước Hoa Cơ Thể",
-            items: [
-                "Bodymiss",
-                "Kiss My Body",
-                "Malissa Kiss",
-                "Silkygirl",
-                "Foellie",
-            ],
-        },
-    ],
-];
-
-// Mega menu columns for 'Thực Phẩm Chức Năng'
-const supplementColumns = [
-    [
-        {
-            title: "Hỗ Trợ Làm Đẹp",
-            items: ["Làm Đẹp Da", "Làm Đẹp Tóc", "Hỗ Trợ Giảm Cân"],
-        },
-        {
-            title: "Hỗ Trợ Sức Khỏe",
-            items: [
-                "Bổ Gan / Giải Rượu",
-                "Dầu Cá / Bổ Mắt",
-                "Hoạt Huyết Dưỡng Não",
-                "Hỗ Trợ Sinh Lý / Nội Tiết Tố",
-                "Hỗ Trợ Tiêu Hoá",
-                "Hỗ Trợ Tim Mạch",
-                "Hỗ Trợ Xương Khớp",
-                "Tăng Sức Đề Kháng",
-                "Vitamin / Khoáng Chất",
-            ],
-        },
-    ],
-    [
-        {
-            title: "Top Thương Hiệu",
-            items: [
-                "DHC",
-                "Elasten",
-                "Itoh kanpo",
-                "Rohto",
-                "Blackmores",
-                "Lavima",
-                "Blossomy",
-                "Heliocare",
-                "Adiva",
-                "Decumar",
-                "Nucos",
-                "Pharmekal",
-                "Lactobact Intima",
-                "Costar",
-            ],
-        },
-    ],
-];
-// Mega menu columns for 'Chăm Sóc Cơ Thể'
-const bodyCareColumns = [
-    [
-        {
-            title: "Sữa Tắm",
-            items: [],
-        },
-        {
-            title: "Xà Phòng",
-            items: [],
-        },
-        {
-            title: "Tẩy Tế Bào Chết Body",
-            items: [],
-        },
-        {
-            title: "Dưỡng Da Tay / Chân",
-            items: [],
-        },
-        {
-            title: "Dưỡng Thể",
-            items: [],
-        },
-        {
-            title: "Chống Nắng Cơ Thể",
-            items: [],
-        },
-        {
-            title: "Khử Mùi",
-            items: [],
-        },
-        {
-            title: "Tẩy Lông / Triệt Lông",
-            items: ["Kem Tẩy Lông", "Dụng Cụ Tẩy Lông"],
-        },
-        {
-            title: "Bộ Chăm Sóc Cơ Thể",
-            items: [],
-        },
-        {
-            title: "Top Bán Chạy",
-            items: [],
-        },
-        {
-            title: "Hàng Mới Về",
-            items: [],
-        },
-    ],
-    [
-        {
-            title: "Top Thương Hiệu",
-            items: [
-                "Dove",
-                "Etiaxil",
-                "Cocoon",
-                "Vaseline",
-                "Lifebuoy",
-                "Hatomugi",
-                "Nivea",
-                "Paula's Choice",
-                "Old Spice",
-                "Cetaphil",
-                "Vichy",
-                "Nuxe",
-                "Angel's Liquid",
-                "Bioré",
-                "Johnson's",
-                "Purité By Provence",
-            ],
-        },
-    ],
-];
-
-// Mega menu columns for 'Chăm Sóc Cá Nhân'
-const personalCareColumns = [
-    [
-        {
-            title: "Chăm Sóc Phụ Nữ",
-            items: [
-                "Băng Vệ Sinh",
-                "Dung Dịch Vệ Sinh",
-                "Dưỡng Vùng Kín",
-                "Miếng Dán Ngực",
-            ],
-        },
-        {
-            title: "Chăm Sóc Răng Miệng",
-            items: [
-                "Bàn Chải Đánh Răng",
-                "Bàn Chải Điện / Phụ Kiện",
-                "Kem Đánh Răng",
-                "Máy Tăm Nước",
-                "Nước Súc Miệng",
-                "Tăm / Chỉ Nha Khoa",
-                "Xịt Thơm Miệng",
-            ],
-        },
-        {
-            title: "Khăn Giấy / Khăn Ướt",
-            items: [],
-        },
-    ],
-    [
-        {
-            title: "Chăm Sóc Sức Khỏe",
-            items: [
-                "Chống Muỗi",
-                "Khẩu Trang",
-                "Máy Massage",
-                "Mặt Nạ Xông Hơi",
-                "Nước Rửa Tay / Diệt Khuẩn",
-                "Sản Phẩm Chăm Sóc Khác",
-            ],
-        },
-        {
-            title: "Cạo Râu",
-            items: ["Bot Cao Rau", "Dao Cao Rau"],
-        },
-        {
-            title: "Hỗ Trợ Tinh Dục",
-            items: ["Bao Cao Su", "Gel Bôi Trơn"],
-        },
-    ],
-];
-
-const faceCareColumns = [
-    [
-        {
-            title: "Làm Sạch Da",
-            items: [
-                "Tẩy Trang Mặt",
-                "Sữa Rửa Mặt",
-                "Tẩy Tế Bào Chết Da Mặt",
-                "Toner / Nước Cân Bằng Da",
-            ],
-        },
-        {
-            title: "Đặc Trị",
-            items: [
-                "Serum / Tinh Chất",
-                "Hỗ Trợ Trị Mụn",
-                "Sản Phẩm Đặc Trị Khác",
-            ],
-        },
-        {
-            title: "Dưỡng Ẩm",
-            items: [
-                "Xịt Khoáng",
-                "Lotion / Sữa Dưỡng",
-                "Kem / Gel / Dầu Dưỡng",
-            ],
-        },
-        {
-            title: "Bộ Chăm Sóc Da Mặt",
-            items: ["Combo Làm Sạch", "Combo Dưỡng Ẩm", "Combo Đặc Trị"],
-        },
-    ],
-    [
-        {
-            title: "Chống Nắng Da Mặt",
-            items: ["Anessa", "La Roche-Posay", "Vichy", "Biore"],
-        },
-        {
-            title: "Dưỡng Mắt",
-            items: ["Kem Dưỡng Mắt", "Mặt Nạ Mắt"],
-        },
-        {
-            title: "Dưỡng Môi",
-            items: ["Son Dưỡng", "Mặt Nạ Môi"],
-        },
-        {
-            title: "Mặt Nạ",
-            items: ["Mặt Nạ Giấy", "Mặt Nạ Đất Sét", "Mặt Nạ Ngủ"],
-        },
-        {
-            title: "Vấn Đề Về Da",
-            items: [
-                "Da Dầu / Lỗ Chân Lông To",
-                "Da Khô / Mất Nước",
-                "Da Lão Hóa",
-                "Da Mụn",
-                "Thâm / Nám / Tàn Nhang",
-            ],
-        },
-        {
-            title: "Dụng Cụ / Phụ Kiện Chăm Sóc Da",
+            title: "",
             items: [
                 "Bông Tẩy Trang",
                 "Dụng Cụ / Máy Rửa Mặt",
-                "Máy Chăm Sóc Da",
+                "Dụng Cụ Chăm Sóc Khác",
+                "Hỗ Trợ Trị Mụn",
+                "Kem / Gel / Dầu Dưỡng",
+                "Lotion / Sữa Dưỡng",
+                "Mặt Nạ Giấy",
+                "Mặt Nạ Lột",
+                "Mặt Nạ Mắt",
+                "Mặt Nạ Môi",
+                "Mặt Nạ Ngủ",
+            ],
+        },
+    ],
+    [
+        {
+            title: "",
+            items: [
+                "Mặt Nạ Rửa",
+                "Sản Phẩm Đặc Trị Khác",
+                "Serum / Kem Dưỡng Mắt",
+                "Serum / Tinh Chất",
+                "Sữa Rửa Mặt",
+                "Tẩy Tế Bào Chết Da Mặt",
+                "Tẩy Tế Bào Chết Môi",
+                "Tẩy Trang Mặt",
+                "Toner / Nước Cân Bằng Da",
+                "Xịt Khoáng",
             ],
         },
     ],
 ];
 
-const makeupColumns = [
-    [
-        {
-            title: "Trang Điểm Mặt",
-            items: [
-                "Kem Lót",
-                "Kem Nền",
-                "Phấn Nước Cushion",
-                "Che Khuyết Điểm",
-                "Má Hồng",
-                "Tạo Khối / Highlight",
-                "Phấn Phủ",
-            ],
-        },
-        {
-            title: "Trang Điểm Mắt",
-            items: ["Kẻ Mắt", "Kẻ Mày", "Phấn Mắt", "Mascara"],
-        },
-        {
-            title: "Bộ Trang Điểm",
-            items: [],
-        },
-    ],
-    [
-        {
-            title: "Trang Điểm Môi",
-            items: [
-                "Son Dưỡng Môi",
-                "Son Kem / Tint",
-                "Son Thỏi",
-                "Son Bóng",
-                "Tẩy Trang Mắt / Môi",
-            ],
-        },
-        {
-            title: "Trang Điểm Móng",
-            items: ["Son Móng", "Dụng Cụ / Phụ Kiện Làm Móng"],
-        },
-        {
-            title: "Dụng Cụ Trang Điểm",
-            items: ["Bông / Mút Trang Điểm", "Cọ Trang Điểm"],
-        },
-    ],
+const bodyCareColumns: MegaMenuColumn[] = [
+    [{ title: "", items: ["Dụng Cụ Tẩy Lông", "Kem Tẩy Lông"] }],
 ];
 
-const hairCareColumns = [
+const hairCareColumns: MegaMenuColumn[] = [
     [
         {
-            title: "Dầu Gội Và Dầu Xả",
-            items: ["Dầu Gội", "Dầu Xả", "Dầu Gội Xả 2in1", "Bộ Gội Xả"],
+            title: "",
+            items: ["Dầu Gội", "Dầu Gội Khô", "Dầu Gội Xả 2in1", "Dầu Xả", "Lược"],
         },
+    ],
+    [
         {
-            title: "Tẩy Tế Bào Chết Da Đầu",
-            items: [],
-        },
-        {
-            title: "Dưỡng Tóc",
+            title: "",
             items: [
+                "Máy Tạo Kiểu Tóc",
                 "Mặt Nạ / Kem Ủ Tóc",
                 "Serum / Dầu Dưỡng Tóc",
                 "Xịt Dưỡng Tóc",
             ],
         },
+    ],
+];
+
+const personalCareColumns: MegaMenuColumn[] = [
+    [
         {
-            title: "Thuốc Nhuộm Tóc",
-            items: [],
-        },
-        {
-            title: "Sản Phẩm Tạo Kiểu Tóc",
-            items: [],
-        },
-        {
-            title: "Dụng Cụ Chăm Sóc Tóc",
-            items: [],
-        },
-        {
-            title: "Bộ Chăm Sóc Tóc",
-            items: [],
+            title: "",
+            items: [
+                "Băng Vệ Sinh",
+                "Dao Cạo Râu",
+                "Dung Dịch Vệ Sinh",
+                "Dưỡng Vùng Kín",
+                "Hỗ Trợ Trắng Răng",
+                "Kem Đánh Răng",
+                "Khẩu Trang",
+            ],
         },
     ],
     [
         {
-            title: "Top Thương Hiệu",
+            title: "",
             items: [
-                "Cocoon",
-                "L'Oréal",
-                "Hotosu",
-                "TRESemmé",
-                "Nguyên Xuân",
-                "Tsubaki",
-                "L'Oreal Professionnel",
-                "Selsun",
-                "Fino",
-                "OGX",
-                "Palmolive",
-                "Aromatica",
+                "Miếng Dán Ngực",
+                "Nước Rửa Tay / Diệt Khuẩn",
+                "Nước Súc Miệng",
+                "Sản Phẩm Chăm Sóc Khác",
+                "Xịt Thơm Miệng",
             ],
         },
+    ],
+];
+
+const makeupColumns: MegaMenuColumn[] = [
+    [
         {
-            title: "Top Bán Chạy",
-            items: [],
+            title: "",
+            items: [
+                "Bấm Mi",
+                "BB / CC Cream",
+                "Bông / Mút Trang Điểm",
+                "Che Khuyết Điểm",
+                "Cọ Trang Điểm",
+                "Dụng Cụ / Phụ Kiện Làm Móng",
+                "Dụng Cụ Trang Điểm Khác",
+                "Giấy Thấm Dầu",
+                "Kẻ Mày",
+                "Kẻ Mắt",
+                "Kem Lót",
+                "Kem Nền",
+                "Má Hồng",
+                "Mascara",
+            ],
         },
+    ],
+    [
         {
-            title: "Hàng Mới Về",
-            items: [],
+            title: "",
+            items: [
+                "Mi Giả",
+                "Miếng Dán Kích Mí",
+                "Nhíp / Dao Cạo",
+                "Phấn Mắt",
+                "Phấn Nền",
+                "Phấn Nước Cushion",
+                "Phấn Phủ",
+                "Son Bóng",
+                "Son Dưỡng Môi",
+                "Son Kem / Tint",
+                "Son Thỏi",
+                "Tạo Khối / Highlight",
+                "Xịt Khoá Makeup",
+            ],
         },
     ],
 ];
@@ -473,8 +214,10 @@ function MegaMenu({ columns, label, parentCategory }: MegaMenuProps) {
                 <div
                     key={`mega-column-${columnIndex}`}
                     className="mega-menu-column">
-                    {column.map((group) => (
-                        <section key={group.title} className="mega-menu-group">
+                    {column.map((group, groupIndex) => (
+                        <section
+                            key={`${columnIndex}-${groupIndex}-${group.title}`}
+                            className="mega-menu-group">
                             <h4>{group.title}</h4>
                             {group.items.length > 0 ? (
                                 <ul>
@@ -482,7 +225,7 @@ function MegaMenu({ columns, label, parentCategory }: MegaMenuProps) {
                                         <li key={subItem}>
                                             <Link
                                                 className="mega-menu-link"
-                                                href={`/products?category=${encodeURIComponent(parentCategory)}&subcategory=${encodeURIComponent(subItem)}`}>
+                                                href={productsHref({ category: parentCategory, subcategory: subItem })}>
                                                 {subItem}
                                             </Link>
                                         </li>
@@ -514,74 +257,62 @@ export default function CategorySidebar({
                 </div>
             ) : null}
             <ul>
-                {categories.map((item) => (
-                    <li
-                        key={item.label}
-                        className={`${item.section ? "is-section-title" : ""}${item.submenu ? " has-submenu" : ""}`.trim()}>
-                        <span className="category-item-left">
-                            {item.href ? (
-                                <Link className="category-link" href={item.href}>
-                                    {item.label}
-                                </Link>
-                            ) : (
-                                <span>{item.label}</span>
+                {categories.map((item) => {
+                    return (
+                        <li
+                            key={item.label}
+                            className={`${item.section ? "is-section-title" : ""}${item.submenu ? " has-submenu" : ""}`.trim()}>
+                            <span className="category-item-left">
+                                {item.href ? (
+                                    <Link className="category-link" href={item.href}>
+                                        {item.label}
+                                    </Link>
+                                ) : (
+                                    <span>{item.label}</span>
+                                )}
+                            </span>
+                            {item.submenu ? (
+                                <span className="category-arrow">›</span>
+                            ) : null}
+                            {/* Mega menu stays attached to its parent row. */}
+                            {item.submenu === "faceCare" && (
+                                <MegaMenu
+                                    columns={faceCareColumns}
+                                    label="Danh mục con chăm sóc da mặt"
+                                    parentCategory={item.queryCategory ?? item.label}
+                                />
                             )}
-                        </span>
-                        {!item.section ? (
-                            <span className="category-arrow">›</span>
-                        ) : null}
-                        {/* Mega menu render lại làm con trực tiếp của li */}
-                        {item.submenu === "faceCare" && (
-                            <MegaMenu
-                                columns={faceCareColumns}
-                                label="Danh mục con chăm sóc da mặt"
-                                parentCategory={item.label}
-                            />
-                        )}
-                        {item.submenu === "makeup" && (
-                            <MegaMenu
-                                columns={makeupColumns}
-                                label="Danh mục con trang điểm"
-                                parentCategory={item.label}
-                            />
-                        )}
-                        {item.submenu === "hairCare" && (
-                            <MegaMenu
-                                columns={hairCareColumns}
-                                label="Danh mục con chăm sóc tóc và da đầu"
-                                parentCategory={item.label}
-                            />
-                        )}
-                        {item.submenu === "bodyCare" && (
-                            <MegaMenu
-                                columns={bodyCareColumns}
-                                label="Danh mục con chăm sóc cơ thể"
-                                parentCategory={item.label}
-                            />
-                        )}
-                        {item.submenu === "personalCare" && (
-                            <MegaMenu
-                                columns={personalCareColumns}
-                                label="Danh mục con chăm sóc cá nhân"
-                                parentCategory={item.label}
-                            />
-                        )}
-                        {item.submenu === "perfume" && (
-                            <MegaMenu
-                                columns={perfumeColumns}
-                                label="Danh mục con nước hoa"
-                                parentCategory={item.label}
-                            />
-                        )}
-                        {item.submenu === "supplement" && (
-                            <MegaMenu
-                                columns={supplementColumns}
-                                label="Danh mục con thực phẩm chức năng"
-                                parentCategory={item.label}
-                            />
-                        )}
-                    </li>
-                ))}
+                            {item.submenu === "makeup" && (
+                                <MegaMenu
+                                    columns={makeupColumns}
+                                    label="Danh mục con trang điểm"
+                                    parentCategory={item.queryCategory ?? item.label}
+                                />
+                            )}
+                            {item.submenu === "hairCare" && (
+                                <MegaMenu
+                                    columns={hairCareColumns}
+                                    label="Danh mục con chăm sóc tóc"
+                                    parentCategory={item.queryCategory ?? item.label}
+                                />
+                            )}
+                            {item.submenu === "bodyCare" && (
+                                <MegaMenu
+                                    columns={bodyCareColumns}
+                                    label="Danh mục con chăm sóc cơ thể"
+                                    parentCategory={item.queryCategory ?? item.label}
+                                />
+                            )}
+                            {item.submenu === "personalCare" && (
+                                <MegaMenu
+                                    columns={personalCareColumns}
+                                    label="Danh mục con chăm sóc cá nhân"
+                                    parentCategory={item.queryCategory ?? item.label}
+                                />
+                            )}
+                        </li>
+                    );
+                })}
             </ul>
         </aside>
     );

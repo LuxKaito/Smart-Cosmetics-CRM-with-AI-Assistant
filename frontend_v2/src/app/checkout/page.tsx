@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import TactileButton from "../../components/ui/TactileButton";
 import {
     fetchVietnamAddressSuggestions,
     type AddressSuggestion,
@@ -975,12 +976,14 @@ export default function CheckoutPage() {
                             </>
                         ) : null}
 
-                        <button
+                        <TactileButton
                             type="submit"
                             disabled={!summary || isSubmitting}
-                            className="mt-5 h-12 w-full rounded-2xl bg-[#F999B7] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
+                            fullWidth
+                            wrapperClassName="mt-5"
+                            className="h-12">
                             {isSubmitting ? "Đang xử lý..." : "Đặt hàng"}
-                        </button>
+                        </TactileButton>
                     </aside>
                 </form>
             </main>

@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import { useHomeData } from "../../hooks/useHomeData";
-import { fetchHomeProducts } from "../../services/productService";
+import { fetchHomeProducts, fetchProducts } from "../../services/productService";
 import { fetchPublicVouchers } from "../../services/voucherService";
 import type { Product } from "../../types/product";
 import Header from "./Header";
@@ -11,8 +12,10 @@ import HeroBanners from "../ui/HeroBanners";
 import CategoryIcons from "../ui/CategoryIcons";
 import CouponRow from "../ui/CouponRow";
 import FlashDeals from "../ui/FlashDeals";
+import HotProductsSection from "../ui/HotProductsSection";
+import BestSellerSection from "../ui/BestSellerSection";
 import BrandStrip from "../ui/BrandStrip";
-import SuggestedSection from "../ui/SuggestedSection";
+import ComprehensiveCareSection from "../ui/ComprehensiveCareSection";
 import EditorialSection from "../editorial/EditorialSection";
 import {
     beautyReviewArticles,
@@ -21,47 +24,68 @@ import {
 
 const serviceItems: Array<{ title: string; text: string }> = [];
 
+function productsHref(filters: {
+    category?: string;
+    subcategory?: string;
+    search?: string;
+}) {
+    const params = new URLSearchParams({ page: "1" });
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.set(key, value);
+    });
+    return `/products?${params.toString()}`;
+}
+
 const cleanFeatureIcons = [
     {
         label: "Chăm sóc da",
         image: "/category-icons/Ch%C4%83m%20s%C3%B3c%20da.png",
-        href: "/products?category=Ch%C4%83m%20S%C3%B3c%20Da%20M%E1%BA%B7t&page=1",
+        href: productsHref({ category: "Chăm Sóc Da Mặt" }),
     },
     {
         label: "Trang điểm",
         image: "/category-icons/Trang%20%C4%91i%E1%BB%83m.png",
-        href: "/products?category=Trang%20%C4%90i%E1%BB%83m&page=1",
+        href: productsHref({ category: "Trang Điểm" }),
     },
     {
         label: "Dưỡng trắng",
         image: "/category-icons/D%C6%B0%E1%BB%A1ng%20tr%E1%BA%AFng.png",
-        href: "/products?category=Ch%C4%83m%20S%C3%B3c%20Da%20M%E1%BA%B7t&subcategory=D%C6%B0%E1%BB%A1ng%20Tr%E1%BA%AFng&page=1",
+        href: productsHref({
+            category: "Chăm Sóc Da Mặt",
+            search: "Dưỡng trắng",
+        }),
     },
     {
         label: "Dưỡng ẩm",
         image: "/category-icons/D%C6%B0%E1%BB%A1ng%20%E1%BA%A9m.png",
-        href: "/products?category=Ch%C4%83m%20S%C3%B3c%20Da%20M%E1%BA%B7t&subcategory=D%C6%B0%E1%BB%A1ng%20%E1%BA%A8m&page=1",
+        href: productsHref({
+            category: "Chăm Sóc Da Mặt",
+            search: "Dưỡng ẩm",
+        }),
     },
     {
         label: "Son môi",
         image: "/category-icons/Son%20m%C3%B4i.png",
-        href: "/products?category=Trang%20%C4%90i%E1%BB%83m&subcategory=Son%20M%C3%B4i&page=1",
+        href: productsHref({ category: "Trang Điểm", search: "Son" }),
     },
     {
         label: "Chăm sóc tóc",
         image: "/category-icons/Ch%C4%83m%20s%C3%B3c%20t%C3%B3c.png",
-        href: "/products?category=Ch%C4%83m%20S%C3%B3c%20T%C3%B3c%20V%C3%A0%20Da%20%C4%90%E1%BA%A7u&page=1",
+        href: productsHref({ category: "Chăm Sóc Tóc Và Da Đầu" }),
     },
     {
         label: "Bộ làm đẹp",
         image: "/category-icons/B%E1%BB%99%20l%C3%A0m%20%C4%91%E1%BA%B9p.png",
         highlight: true,
-        href: "/products?search=B%E1%BB%99%20l%C3%A0m%20%C4%91%E1%BA%B9p&page=1",
+        href: productsHref({ category: "Trang Điểm", search: "Bộ" }),
     },
     {
         label: "Tẩy tế bào chết",
         image: "/category-icons/T%E1%BA%A9y%20t%E1%BA%BF%20b%C3%A0o%20ch%E1%BA%BFt.png",
-        href: "/products?search=T%E1%BA%A9y%20t%E1%BA%BF%20b%C3%A0o%20ch%E1%BA%BFt&page=1",
+        href: productsHref({
+            category: "Chăm Sóc Da Mặt",
+            subcategory: "Tẩy Tế Bào Chết Da Mặt",
+        }),
     },
 ];
 
@@ -71,13 +95,19 @@ export default function HomePage() {
         flashDeals,
         brandShowcase,
         bestSellers,
-        topSearches,
-        homeProducts,
     } = useHomeData();
 
     const { data: remoteProducts = [] } = useQuery<Product[]>({
         queryKey: ["home-products"],
         queryFn: () => fetchHomeProducts(36),
+    });
+    const { data: hotProducts = [] } = useQuery<Product[]>({
+        queryKey: ["home-hot-products"],
+        queryFn: () => fetchHomeProducts(100),
+    });
+    const { data: newArrivalResult } = useQuery({
+        queryKey: ["home-new-arrivals"],
+        queryFn: () => fetchProducts({ page: 1, limit: 10, sort: "-createdAt" }),
     });
     const { data: publicVouchers = [] } = useQuery({
         queryKey: ["public-vouchers"],
@@ -88,9 +118,6 @@ export default function HomePage() {
         remoteProducts.length > 0 ? remoteProducts.slice(0, 10) : flashDeals;
     const bestSellerData =
         remoteProducts.length > 0 ? remoteProducts.slice(10, 18) : bestSellers;
-    const topSearchData =
-        remoteProducts.length > 0 ? remoteProducts.slice(18, 26) : topSearches;
-
     return (
         <div className="page-shell beauty-storefront">
             <Header />
@@ -111,7 +138,7 @@ export default function HomePage() {
                     ))}
                 </section>
 
-                <section className="container">
+                <section className="container category-icons-container">
                     <CategoryIcons
                         items={
                             cleanFeatureIcons.length
@@ -125,21 +152,42 @@ export default function HomePage() {
                     <CouponRow coupons={publicVouchers} />
                 </section>
 
-                <section
-                    className="container promo-wide"
-                    aria-label="Khuyến mãi lớn">
-                    <div className="promo-wide-content">
-                        <span>Beauty Week</span>
-                        <h2>Ưu đãi lớn đến 60%</h2>
-                        <p>
-                            Flash sale theo khung giờ, cập nhật ưu đãi mới mỗi
-                            ngày.
-                        </p>
+                <section className="container flash-sale-cat-section" aria-hidden="true">
+                    <div className="flash-sale-cat-stage">
+                        <span className="flash-sale-sparkle flash-sale-sparkle--one">✦</span>
+                        <span className="flash-sale-sparkle flash-sale-sparkle--two">✧</span>
+                        <span className="flash-sale-sparkle flash-sale-sparkle--three">✦</span>
+                        <span className="flash-sale-sparkle flash-sale-sparkle--four">✧</span>
+                        <Image
+                            src="/mascots/flash-sale-cat.png"
+                            alt=""
+                            width={1312}
+                            height={1199}
+                            sizes="(max-width: 480px) 160px, (max-width: 980px) 200px, 230px"
+                            className="flash-sale-cat-image"
+                        />
                     </div>
                 </section>
 
                 <section className="container">
-                    <FlashDeals deals={flashDealsData} />
+                    <FlashDeals deals={flashDealsData} title="FLASH SALE" />
+                </section>
+
+                <section className="container hot-products-container">
+                    <HotProductsSection products={hotProducts} />
+                </section>
+
+                <section className="container">
+                    <FlashDeals
+                        deals={newArrivalResult?.items ?? []}
+                        title="Sản phẩm mới về"
+                        showTimer={false}
+                        variant="plain"
+                    />
+                </section>
+
+                <section className="container">
+                    <BestSellerSection products={bestSellerData} />
                 </section>
 
                 <section className="container">
@@ -147,34 +195,12 @@ export default function HomePage() {
                 </section>
 
                 <section className="container">
-                    <FlashDeals
-                        deals={bestSellerData}
-                        title="Bán chạy"
-                        showTimer={false}
-                        variant="plain"
-                    />
-                </section>
-
-                <section className="container">
-                    <FlashDeals
-                        deals={topSearchData}
-                        title="Top tìm kiếm"
-                        showTimer={false}
-                        variant="plain"
-                    />
-                </section>
-
-                <section className="container">
-                    <SuggestedSection
-                        title="Gợi ý cho bạn"
-                        products={homeProducts}
-                    />
+                    <ComprehensiveCareSection />
                 </section>
 
                 <section className="container">
                     <EditorialSection
                         title="Review mỹ phẩm"
-                        description="Gợi ý sản phẩm và routine phù hợp để bạn mua sắm dễ dàng hơn."
                         articles={beautyReviewArticles}
                         viewAllHref="/review-my-pham"
                         articleBaseHref="/review-my-pham"
@@ -184,7 +210,6 @@ export default function HomePage() {
                 <section className="container">
                     <EditorialSection
                         title="Tin tức LuxBerry"
-                        description="Cập nhật ưu đãi, chính sách và thông tin mới từ LuxBerry Beauty."
                         articles={luxberryNewsArticles}
                         viewAllHref="/tin-tuc-luxberry"
                         articleBaseHref="/tin-tuc-luxberry"
