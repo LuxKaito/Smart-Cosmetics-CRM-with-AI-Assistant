@@ -1,6 +1,26 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 
+const productVariantSchema = new mongoose.Schema(
+  {
+    product_id: { type: String, trim: true },
+    variant_id: { type: String, trim: true },
+    variant_title: { type: String, trim: true },
+    option1: { type: String, trim: true },
+    option2: { type: String, trim: true },
+    option3: { type: String, trim: true },
+    sale_price: { type: Number, min: 0 },
+    original_price: { type: Number, min: 0 },
+    available: { type: Boolean },
+    inventory_quantity: { type: Number },
+    barcode: { type: String, trim: true },
+    sku: { type: String, trim: true },
+    image_url: { type: String, trim: true },
+    product_url: { type: String, trim: true }
+  },
+  { _id: false }
+);
+
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -45,12 +65,17 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+    image_count: { type: Number, min: 0 },
     images: [
       {
         type: String,
         trim: true
       }
     ],
+    variants: {
+      type: [productVariantSchema],
+      default: []
+    },
     description: {
       type: String,
       trim: true
@@ -91,6 +116,20 @@ const productSchema = new mongoose.Schema(
       trim: true,
       index: true
     },
+    category_level_3: {
+      type: String,
+      trim: true,
+      index: true
+    },
+    category_level_4: {
+      type: String,
+      trim: true,
+      index: true
+    },
+    category_path: {
+      type: [String],
+      default: []
+    },
     benefits: {
       type: String,
       trim: true,
@@ -105,6 +144,8 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+    main_ingredients: { type: String, trim: true },
+    full_ingredients: { type: String, trim: true },
     usage_instructions: {
       type: String,
       trim: true
@@ -136,6 +177,26 @@ const productSchema = new mongoose.Schema(
       default: 0,
       index: true
     },
+    available: { type: Boolean, default: true, index: true },
+    source_total_inventory: { type: Number },
+    variant_count: { type: Number, min: 0 },
+    price_min: { type: Number, min: 0 },
+    price_max: { type: Number, min: 0 },
+    short_description: { type: String, trim: true },
+    seo_title: { type: String, trim: true },
+    brand_story: { type: String, trim: true },
+    specs: { type: String, trim: true },
+    made_in: { type: String, trim: true },
+    warnings: { type: String, trim: true },
+    storage: { type: String, trim: true },
+    scent_notes: { type: String, trim: true },
+    promo_note: { type: String, trim: true },
+    source_product_type: { type: String, trim: true },
+    source_product_url: { type: String, trim: true },
+    source_tags: { type: String, trim: true },
+    category_map_status: { type: String, trim: true },
+    source: { type: String, trim: true, index: true },
+    source_data: { type: mongoose.Schema.Types.Mixed, select: false },
     sourceId: {
       type: String,
       index: true,
@@ -160,12 +221,14 @@ productSchema.index({
   brand: 'text',
   category_level_1: 'text',
   category_level_2: 'text',
+  category_level_3: 'text',
+  category_level_4: 'text',
   benefits: 'text',
   product_type: 'text',
   ingredients: 'text',
   usage_instructions: 'text'
 });
-productSchema.index({ brand: 1, category_level_2: 1, product_type: 1, sale_price: 1 });
+productSchema.index({ brand: 1, category_level_2: 1, category_level_3: 1, category_level_4: 1, sale_price: 1 });
 
 productSchema.pre('validate', function normalizeFields(next) {
   const primaryName = this.product_name_vn || this.product_name_en || this.name;
