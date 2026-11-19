@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { saveVoucher } from "../../services/voucherService";
 import { useAuthStore } from "../../stores/authStore";
 import type { Voucher } from "../../types/voucher";
+import TactileButton from "./TactileButton";
 
 const money = (value?: number) => `${Number(value || 0).toLocaleString("vi-VN")}đ`;
 
@@ -66,15 +67,15 @@ export default function CouponRow({ coupons }: { coupons: Voucher[] }) {
                             <div className="coupon-body">
                                 <h3>Nhập mã: {coupon.code}</h3>
                                 <p>{describeVoucher(coupon)}</p>
-                                <button
-                                    type="button"
+                                <TactileButton
+                                    size="compact"
                                     disabled={savingCode === coupon.code}
                                     onClick={() => void handleSave(coupon.code)}
                                     tabIndex={index >= coupons.length ? -1 : 0}>
                                     {savingCode === coupon.code
                                         ? "Đang lưu"
                                         : "Lưu mã"}
-                                </button>
+                                </TactileButton>
                             </div>
                         </article>
                     ))}

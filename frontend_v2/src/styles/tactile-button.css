@@ -1,0 +1,14 @@
+.tactile-button-cap:focus-visible {
+    outline: 3px solid rgba(242, 126, 165, 0.55);
+    outline-offset: 4px;
+}
+
+.tactile-button-cap:disabled {
+    cursor: not-allowed;
+}
+
+.tactile-button-center {
+    display: flex;
+    width: fit-content;
+    margin: 16px auto 0;
+}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
+import TactileButton from "../../components/ui/TactileButton";
 import {
     clearCartApi,
     fetchCart,
@@ -305,13 +306,15 @@ export default function CartPage() {
                             </span>
                         </div>
 
-                        <button
+                        <TactileButton
                             type="button"
                             onClick={handleCheckout}
                             disabled={items.length === 0}
-                            className="mt-5 h-12 w-full rounded-md bg-[#ef6697] px-3 text-base font-extrabold uppercase text-white disabled:cursor-not-allowed disabled:opacity-60">
+                            fullWidth
+                            wrapperClassName="mt-5"
+                            className="h-12">
                             Thanh toán ngay
-                        </button>
+                        </TactileButton>
 
                         <Link
                             href="/products"

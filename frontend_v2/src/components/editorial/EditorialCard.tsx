@@ -17,7 +17,7 @@ export default function EditorialCard({
     href: string;
 }) {
     return (
-        <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#F4DEE6] bg-white shadow-[0_8px_20px_rgba(154,88,111,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_rgba(154,88,111,0.14)]">
+        <article data-motion-card className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#F4DEE6] bg-white shadow-[0_8px_20px_rgba(154,88,111,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_rgba(154,88,111,0.14)]">
             <Link
                 href={href}
                 aria-label={`Xem bài viết: ${article.title}`}

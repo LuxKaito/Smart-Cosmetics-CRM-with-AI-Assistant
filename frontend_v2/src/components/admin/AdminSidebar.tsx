@@ -59,7 +59,7 @@ export default function AdminSidebar({ isOpen, collapsed, onClose, onToggleColla
                             <BellRing size={24} className="rotate-12" />
                         </span>
                         <span className={collapsed ? "lg:hidden" : ""}>
-                            <span className="block font-serif text-2xl font-bold leading-7 text-[#F999B7]">
+                            <span className="block font-sans text-2xl font-bold leading-7 text-[#F999B7]">
                                 LuxBerry
                             </span>
                             <span className="block text-[9px] font-bold uppercase tracking-[0.38em] text-[#F999B7]">
@@ -109,7 +109,7 @@ export default function AdminSidebar({ isOpen, collapsed, onClose, onToggleColla
                     <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FFD4E1] text-[#F999B7] shadow-[0_12px_28px_rgba(249,153,183,0.22)]">
                         <Package size={30} />
                     </div>
-                    <p className="font-serif text-xl font-semibold text-[#2B1B24]">
+                    <p className="font-sans text-xl font-semibold text-[#2B1B24]">
                         LuxBerry Beauty
                     </p>
                     <p className="mt-1 text-sm text-[#7A6A70]">

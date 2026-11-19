@@ -15,6 +15,11 @@ const config: Config = {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
+                serif: ["var(--font-editorial)", "Georgia", "serif"],
+                display: ["var(--font-display)", "Arial Narrow", "sans-serif"],
+            },
             borderRadius: {
                 lg: "var(--radius)",
                 md: "calc(var(--radius) - 2px)",

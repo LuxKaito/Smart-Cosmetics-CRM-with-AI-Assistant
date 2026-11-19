@@ -7,7 +7,6 @@ const env = require('../config/env');
 const Product = require('../infrastructure/database/models/ProductModel');
 const logger = require('../shared/utils/logger');
 
-const DEFAULT_DATA_FILE = path.join(process.cwd(), 'data', 'Hasaki_Data_Final.xlsx');
 const REQUIRED_COLUMNS = [
   'product_name_vn',
   'product_name_en',
@@ -26,12 +25,16 @@ const REQUIRED_COLUMNS = [
   'category_level_2',
   'category_level_3',
   'category_level_4',
-  'ingredients',
   'usage_instructions'
 ];
 
 async function run() {
-  const filePath = process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_DATA_FILE;
+  const filePath = process.argv[2] ? path.resolve(process.argv[2]) : null;
+  if (!filePath) {
+    throw new Error(
+      'This legacy importer requires an explicit workbook path. Use npm run seed:products for the current LamThao dataset with variants and categories.'
+    );
+  }
 
   await mongoose.connect(env.mongoUri);
 
@@ -131,15 +134,19 @@ function normalizeRow(row) {
     origin: normalizeText(row.origin),
     category_level_1: normalizeText(row.category_level_1),
     category_level_2: normalizeText(row.category_level_2),
-    benefits: normalizeText(row.category_level_3),
+    benefits: normalizeText(row.benefits) || normalizeText(row.category_level_3),
     product_type: normalizeText(row.category_level_4),
-    ingredients: normalizeText(row.ingredients),
+    ingredients:
+      normalizeText(row.full_ingredients) ||
+      normalizeText(row.main_ingredients) ||
+      normalizeText(row.ingredients),
     usage_instructions: normalizeText(row.usage_instructions),
     rating: clamp(toNumber(row.rating) || 0, 0, 5),
     review_count: toNonNegativeInt(toNumber(row.review_count)),
     qa_count: toNonNegativeInt(toNumber(row.qa_count)),
-    stock: 100,
-    isActive: true
+    stock: toNonNegativeInt(toNumber(row.stock_quantity) ?? 100),
+    soldCount: toNonNegativeInt(toNumber(row.sold_count) || 0),
+    isActive: toBoolean(row.is_active, true)
   };
 }
 
@@ -248,6 +255,14 @@ async function uniqueSlug(name, brand) {
 
 function normalizeText(value) {
   return String(value ?? '').trim();
+}
+
+function toBoolean(value, fallback) {
+  if (typeof value === 'boolean') return value;
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (['true', '1', 'yes', 'có'].includes(normalized)) return true;
+  if (['false', '0', 'no', 'không'].includes(normalized)) return false;
+  return fallback;
 }
 
 function toNumber(value) {

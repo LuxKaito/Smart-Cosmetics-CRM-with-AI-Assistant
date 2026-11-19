@@ -71,100 +71,71 @@ export const brands = [
 ];
 
 export const brandShowcase = {
-    hero: {
-        image: "/brands/nen.png",
-        label: "Hasaki Deals",
-    },
     items: [
         {
             id: "brand-01",
-            name: "Eucerin",
-            image: "/brands/eucerin.png",
+            name: "Jessup",
+            image: "/brands/lamthao/jessup.png",
         },
         {
             id: "brand-02",
-            name: "Sunplay",
-            image: "/brands/skinaqua.png",
+            name: "Cocoon",
+            image: "/brands/lamthao/cocoon.png",
         },
         {
             id: "brand-03",
-            name: "Skin1004",
-            image: "/brands/skin1004.png",
+            name: "Caryophy",
+            image: "/brands/lamthao/caryophy.png",
         },
         {
             id: "brand-04",
-            name: "Mastige",
-            image: "/brands/mastige.png",
+            name: "Glorie",
+            image: "/brands/lamthao/glorie.png",
         },
         {
             id: "brand-05",
-            name: "Klairs",
-            image: "/brands/klairs.png",
+            name: "Dasique",
+            image: "/brands/lamthao/dasique.png",
         },
         {
             id: "brand-06",
-            name: "Garnier",
-            image: "/brands/garnier.png",
+            name: "Colorkey",
+            image: "/brands/lamthao/colorkey.png",
         },
         {
             id: "brand-07",
-            name: "Hada Labo",
-            image: "/brands/labo.png",
+            name: "Espoir",
+            image: "/brands/lamthao/espoir.png",
         },
         {
             id: "brand-08",
-            name: "Anessa",
-            image: "/brands/anessa.png",
+            name: "3CE",
+            image: "/brands/lamthao/3ce.png",
         },
         {
             id: "brand-09",
-            name: "Cocoon",
-            image: "/brands/cocoon.png",
+            name: "Jumiso",
+            image: "/brands/lamthao/jumiso.png",
         },
         {
             id: "brand-10",
-            name: "Vichy",
-            image: "/brands/vichy.png",
+            name: "Make P:rem",
+            image: "/brands/lamthao/prem.png",
         },
         {
             id: "brand-11",
-            name: "Bioderma",
-            image: "/brands/bioderma.png",
+            name: "Emmie",
+            image: "/brands/lamthao/emmie.png",
         },
         {
             id: "brand-12",
-            name: "CeraVe",
-            image: "/brands/cerave.png",
+            name: "MD Care",
+            image: "/brands/lamthao/md-care.png",
         },
         {
             id: "brand-13",
-            name: "La Roche-Posay",
-            image: "/brands/larocheposay.png",
-        },
-        {
-            id: "brand-14",
-            name: "L'Oreal Paris",
-            image: "/brands/loreal.png",
-        },
-        {
-            id: "brand-15",
-            name: "Dove",
-            image: "/brands/dove.png",
-        },
-        {
-            id: "brand-16",
-            name: "Vaseline",
-            image: "/brands/vaseline.png",
-        },
-        {
-            id: "brand-17",
-            name: "Naris Up",
-            image: "/brands/narisup.png",
-        },
-        {
-            id: "brand-18",
-            name: "Judydoll",
-            image: "/brands/judydoll.png",
+            name: "Dcash",
+            image: "/brands/lamthao/dcash.png",
         },
     ],
 };

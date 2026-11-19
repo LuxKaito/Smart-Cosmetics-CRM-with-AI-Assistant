@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchHomeProducts } from "../../services/productService";
 import type { Product } from "../../types/product";
 import ProductCard, { enrichProducts } from "./ProductCard";
+import TactileButton from "./TactileButton";
 
 interface SuggestedSectionProps {
     title: string;
@@ -63,9 +63,18 @@ export default function SuggestedSection({
                 ))}
             </div>
 
-            <Link href="/products" className="suggest-more">
+            <TactileButton
+                href="/products"
+                size="compact"
+                wrapperClassName="tactile-button-center"
+                className="view-more-action"
+                variant="secondary"
+                fill="#FFFFFF"
+                textColor="#8F2348"
+                hoverFill="#FF7A1A"
+                hoverTextColor="#FFFFFF">
                 Xem thêm
-            </Link>
+            </TactileButton>
         </section>
     );
 }

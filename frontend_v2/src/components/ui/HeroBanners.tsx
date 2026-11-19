@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const mainBanners = [
-    { image: "/banner/banner1.png", label: "LuxBerry chi nhánh mới", href: "/he-thong-cua-hang" },
     { image: "/banner/banner2.png", label: "Ưu đãi mỹ phẩm LuxBerry", href: "/products" },
     { image: "/banner/banner3.png", label: "Giải pháp chăm da MD Care", href: "/products?search=MD%20Care" },
     { image: "/banner/banner4.png", label: "Mỹ phẩm nổi bật LuxBerry", href: "/products" },
@@ -45,7 +44,7 @@ export default function HeroBanners() {
                         <Link
                             key={banner.image}
                             href={banner.href}
-                            className="hero-carousel-slide"
+                            className={`hero-carousel-slide${activeIndex === index ? " is-active" : ""}`}
                             aria-hidden={activeIndex !== index}
                             tabIndex={activeIndex === index ? 0 : -1}>
                             <Image
@@ -61,14 +60,14 @@ export default function HeroBanners() {
 
                 <button
                     type="button"
-                    className="hero-carousel-arrow is-left"
+                    className="hero-carousel-arrow home-carousel-arrow home-carousel-arrow--prev is-left"
                     onClick={showPrevious}
                     aria-label="Banner trước">
                     <ChevronLeft size={20} />
                 </button>
                 <button
                     type="button"
-                    className="hero-carousel-arrow is-right"
+                    className="hero-carousel-arrow home-carousel-arrow home-carousel-arrow--next is-right"
                     onClick={showNext}
                     aria-label="Banner tiếp theo">
                     <ChevronRight size={20} />
