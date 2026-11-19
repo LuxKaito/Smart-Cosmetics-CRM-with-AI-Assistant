@@ -12,7 +12,6 @@ services:
       - "5000:5000"
     volumes:
       - ./uploads:/app/uploads
-      - ./data:/app/data:ro
     depends_on:
       mongo:
         condition: service_started
