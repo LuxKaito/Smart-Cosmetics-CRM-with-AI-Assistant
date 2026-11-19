@@ -60,14 +60,14 @@ export default function HeroBanners() {
 
                 <button
                     type="button"
-                    className="hero-carousel-arrow is-left"
+                    className="hero-carousel-arrow home-carousel-arrow home-carousel-arrow--prev is-left"
                     onClick={showPrevious}
                     aria-label="Banner trước">
                     <ChevronLeft size={20} />
                 </button>
                 <button
                     type="button"
-                    className="hero-carousel-arrow is-right"
+                    className="hero-carousel-arrow home-carousel-arrow home-carousel-arrow--next is-right"
                     onClick={showNext}
                     aria-label="Banner tiếp theo">
                     <ChevronRight size={20} />

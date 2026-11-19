@@ -99,7 +99,7 @@ export default function HotProductsSection({
                 <div className="hot-products-slider">
                     <button
                         type="button"
-                        className="hot-products-arrow is-prev"
+                        className="hot-products-arrow home-carousel-arrow home-carousel-arrow--prev is-prev"
                         onClick={() => changePage(-1)}
                         disabled={pages.length < 2}
                         aria-label="Xem nhóm sản phẩm trước">
@@ -145,7 +145,7 @@ export default function HotProductsSection({
 
                     <button
                         type="button"
-                        className="hot-products-arrow is-next"
+                        className="hot-products-arrow home-carousel-arrow home-carousel-arrow--next is-next"
                         onClick={() => changePage(1)}
                         disabled={pages.length < 2}
                         aria-label="Xem nhóm sản phẩm tiếp theo">

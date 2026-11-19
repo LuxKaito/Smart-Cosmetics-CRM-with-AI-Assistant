@@ -54,6 +54,7 @@ function matchesCategory(product: Product, category: BestSellerCategory) {
 
 export default function BestSellerSection({ products }: { products: Product[] }) {
     const [activeCategory, setActiveCategory] = useState("all");
+    const [activePage, setActivePage] = useState(0);
     const sortedProducts = useMemo(
         () =>
             products
@@ -65,13 +66,20 @@ export default function BestSellerSection({ products }: { products: Product[] })
                 .map(({ product }) => product),
         [products],
     );
-    const displayedProducts = useMemo(() => {
+    const filteredProducts = useMemo(() => {
         const selectedCategory = categories.find((category) => category.id === activeCategory);
-        const matchingProducts = selectedCategory
+        return selectedCategory
             ? sortedProducts.filter((product) => matchesCategory(product, selectedCategory))
             : sortedProducts;
-        return matchingProducts.slice(0, 6);
     }, [activeCategory, sortedProducts]);
+    const pageCount = Math.ceil(filteredProducts.length / 6);
+    const pageIndex = pageCount > 0 ? Math.min(activePage, pageCount - 1) : 0;
+    const displayedProducts = filteredProducts.slice(pageIndex * 6, pageIndex * 6 + 6);
+
+    const changePage = (direction: number) => {
+        if (pageCount < 2) return;
+        setActivePage((current) => (current + direction + pageCount) % pageCount);
+    };
 
     return (
         <section className="top-selling-section" aria-labelledby="top-selling-title">
@@ -87,7 +95,10 @@ export default function BestSellerSection({ products }: { products: Product[] })
                         role="tab"
                         aria-selected={activeCategory === category.id}
                         className={`top-selling-tab${activeCategory === category.id ? " is-active" : ""}`}
-                        onClick={() => setActiveCategory(category.id)}>
+                        onClick={() => {
+                            setActiveCategory(category.id);
+                            setActivePage(0);
+                        }}>
                         {category.label}
                     </button>
                 ))}
@@ -96,7 +107,10 @@ export default function BestSellerSection({ products }: { products: Product[] })
                     role="tab"
                     aria-selected={activeCategory === "all"}
                     className={`top-selling-tab${activeCategory === "all" ? " is-active" : ""}`}
-                    onClick={() => setActiveCategory("all")}>
+                    onClick={() => {
+                        setActiveCategory("all");
+                        setActivePage(0);
+                    }}>
                     TOÀN BỘ
                 </button>
             </nav>
@@ -117,15 +131,37 @@ export default function BestSellerSection({ products }: { products: Product[] })
                 </Link>
 
                 {displayedProducts.length > 0 ? (
-                    <div className="top-selling-products" role="tabpanel" aria-live="polite">
-                        {displayedProducts.map((product, index) => (
-                            <ProductCard
-                                key={`${product._id || product.id || product.name}-${index}`}
-                                item={product}
-                                realDataOnly
-                                showOfficialBadge
-                            />
-                        ))}
+                    <div className="top-selling-carousel">
+                        <button
+                            type="button"
+                            className="top-selling-arrow home-carousel-arrow home-carousel-arrow--prev is-left"
+                            onClick={() => changePage(-1)}
+                            disabled={pageCount < 2}
+                            aria-label="Xem sản phẩm bán chạy trước"
+                        >
+                            <span aria-hidden="true">‹</span>
+                        </button>
+
+                        <div className="top-selling-products" role="tabpanel" aria-live="polite">
+                            {displayedProducts.map((product, index) => (
+                                <ProductCard
+                                    key={`${product._id || product.id || product.name}-${index}`}
+                                    item={product}
+                                    realDataOnly
+                                    showOfficialBadge
+                                />
+                            ))}
+                        </div>
+
+                        <button
+                            type="button"
+                            className="top-selling-arrow home-carousel-arrow home-carousel-arrow--next is-right"
+                            onClick={() => changePage(1)}
+                            disabled={pageCount < 2}
+                            aria-label="Xem sản phẩm bán chạy tiếp theo"
+                        >
+                            <span aria-hidden="true">›</span>
+                        </button>
                     </div>
                 ) : (
                     <p className="top-selling-empty" role="tabpanel" aria-live="polite">

@@ -123,6 +123,14 @@ export default function ProductCard({
         item.thumbnail ||
         item.thumb ||
         (Array.isArray(item.images) ? item.images[0] : undefined);
+    const alternateImageUrl = Array.isArray(item.images)
+        ? item.images.find(
+              (image) =>
+                  typeof image === "string" &&
+                  image.trim().length > 0 &&
+                  image !== imageUrl,
+          )
+        : undefined;
 
     const { salePrice, originalPrice } = resolvePrice(item);
     const discountPercent = resolveDiscountPercent(item);
@@ -236,17 +244,28 @@ export default function ProductCard({
                     <div
                         className="thumb"
                         style={
-                            imageUrl && !realDataOnly
+                            imageUrl && !realDataOnly && !alternateImageUrl
                                 ? { backgroundImage: `url(${imageUrl})` }
                                 : undefined
                         }>
-                        {realDataOnly && imageUrl ? (
+                        {imageUrl && (realDataOnly || alternateImageUrl) ? (
                             <Image
                                 src={imageUrl}
                                 alt={item.name}
                                 fill
                                 sizes="(max-width: 480px) 90vw, 194px"
-                                className="hot-product-image"
+                                className="hot-product-image product-image-primary"
+                                unoptimized
+                            />
+                        ) : null}
+                        {alternateImageUrl ? (
+                            <Image
+                                src={alternateImageUrl}
+                                alt=""
+                                aria-hidden="true"
+                                fill
+                                sizes="(max-width: 480px) 90vw, 194px"
+                                className="hot-product-image product-image-alternate"
                                 unoptimized
                             />
                         ) : null}

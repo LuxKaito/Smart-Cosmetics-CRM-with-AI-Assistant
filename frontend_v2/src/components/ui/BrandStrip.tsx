@@ -176,14 +176,14 @@ export default function BrandStrip({
                 }}>
                 <button
                     type="button"
-                    className="brand-showcase-nav is-left"
+                    className="brand-showcase-nav home-carousel-arrow home-carousel-arrow--prev is-left"
                     aria-label="Xem thương hiệu trước"
                     onClick={() => moveCarousel(-1)}>
                     ‹
                 </button>
                 <button
                     type="button"
-                    className="brand-showcase-nav is-right"
+                    className="brand-showcase-nav home-carousel-arrow home-carousel-arrow--next is-right"
                     aria-label="Xem thương hiệu tiếp theo"
                     onClick={() => moveCarousel(1)}>
                     ›
