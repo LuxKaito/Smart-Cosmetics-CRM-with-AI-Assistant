@@ -102,6 +102,8 @@ function normalizeProductInput(data) {
     const categories = next.categories.map((category) => String(category || '').trim()).filter(Boolean);
     if (!next.category_level_1 && categories[0]) next.category_level_1 = categories[0];
     if (!next.category_level_2 && categories[1]) next.category_level_2 = categories[1];
+    if (!next.category_level_3 && categories[2]) next.category_level_3 = categories[2];
+    if (!next.category_level_4 && categories[3]) next.category_level_4 = categories[3];
     if (!next.benefits && categories[2]) next.benefits = categories[2];
     if (!next.product_type && categories[3]) next.product_type = categories[3];
   }
@@ -119,8 +121,8 @@ function toCatalogProduct(product) {
   const categories = [
     source.category_level_1,
     source.category_level_2,
-    source.benefits,
-    source.product_type
+    source.category_level_3 || source.benefits,
+    source.category_level_4 || source.product_type
   ].filter(Boolean);
   const images = Array.isArray(source.images) ? source.images.filter(Boolean) : [];
   const description = source.description || '';
@@ -147,8 +149,11 @@ function toCatalogProduct(product) {
     qa_count: Number.isFinite(Number(source.qa_count)) ? Number(source.qa_count) : 0,
     description,
     category: source.category_level_2 || source.category_level_1 || '',
-    subcategory: source.product_type || source.benefits || '',
+    subcategory: source.category_level_4 || source.product_type || source.category_level_3 || source.benefits || '',
     categories,
+    category_path: categories,
+    category_level_3: source.category_level_3 || source.benefits || '',
+    category_level_4: source.category_level_4 || source.product_type || '',
     images,
     usageInstructions: source.usage_instructions || ''
   };
