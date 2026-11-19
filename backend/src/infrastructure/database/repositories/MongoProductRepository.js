@@ -75,10 +75,13 @@ class MongoProductRepository {
       subcategory,
       category_level_1,
       category_level_2,
+      category_level_3,
+      category_level_4,
       benefits,
       product_type,
       brand,
       skin_type,
+      inStock,
       minPrice,
       maxPrice,
       isActive,
@@ -102,6 +105,13 @@ class MongoProductRepository {
       }
     }
 
+    if (inStock === true) {
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [{ stock: { $gt: 0 } }, { stock: null }]
+      });
+    }
+
     if (category) {
       const categoryRegex = new RegExp(`^${escapeRegExp(category)}$`, 'i');
       filter.$and = filter.$and || [];
@@ -109,6 +119,8 @@ class MongoProductRepository {
         $or: [
           { category_level_1: categoryRegex },
           { category_level_2: categoryRegex },
+          { category_level_3: categoryRegex },
+          { category_level_4: categoryRegex },
           { benefits: categoryRegex },
           { product_type: categoryRegex }
         ]
@@ -119,12 +131,19 @@ class MongoProductRepository {
       const subcategoryRegex = new RegExp(`^${escapeRegExp(subcategory)}$`, 'i');
       filter.$and = filter.$and || [];
       filter.$and.push({
-        $or: [{ benefits: subcategoryRegex }, { product_type: subcategoryRegex }]
+        $or: [
+          { category_level_3: subcategoryRegex },
+          { category_level_4: subcategoryRegex },
+          { benefits: subcategoryRegex },
+          { product_type: subcategoryRegex }
+        ]
       });
     }
 
     if (category_level_1) filter.category_level_1 = new RegExp(`^${escapeRegExp(category_level_1)}$`, 'i');
     if (category_level_2) filter.category_level_2 = new RegExp(`^${escapeRegExp(category_level_2)}$`, 'i');
+    if (category_level_3) filter.category_level_3 = new RegExp(`^${escapeRegExp(category_level_3)}$`, 'i');
+    if (category_level_4) filter.category_level_4 = new RegExp(`^${escapeRegExp(category_level_4)}$`, 'i');
     if (benefits) filter.benefits = new RegExp(`^${escapeRegExp(benefits)}$`, 'i');
     if (product_type) filter.product_type = new RegExp(`^${escapeRegExp(product_type)}$`, 'i');
 
@@ -163,7 +182,15 @@ class MongoProductRepository {
   async listCategories() {
     const docs = await Product.find(
       { isActive: true },
-      { category_level_1: 1, category_level_2: 1, benefits: 1, product_type: 1, _id: 0 }
+      {
+        category_level_1: 1,
+        category_level_2: 1,
+        category_level_3: 1,
+        category_level_4: 1,
+        benefits: 1,
+        product_type: 1,
+        _id: 0
+      }
     ).lean();
 
     const categories = new Set();
@@ -172,7 +199,9 @@ class MongoProductRepository {
 
     for (const doc of docs) {
       const mainCategory = normalizeText(doc.category_level_2) || normalizeText(doc.category_level_1);
-      const childCategory = normalizeText(doc.product_type) || normalizeText(doc.benefits);
+      const level3 = normalizeText(doc.category_level_3) || normalizeText(doc.benefits);
+      const level4 = normalizeText(doc.category_level_4) || normalizeText(doc.product_type);
+      const childCategory = level4 || level3;
 
       if (mainCategory) {
         categories.add(mainCategory);
@@ -182,6 +211,11 @@ class MongoProductRepository {
       if (childCategory) {
         subcategories.add(childCategory);
         if (mainCategory) subcategoriesByCategory[mainCategory].add(childCategory);
+      }
+
+      if (level3) {
+        subcategories.add(level3);
+        if (mainCategory) subcategoriesByCategory[mainCategory].add(level3);
       }
     }
 

@@ -1,8 +1,9 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
@@ -29,6 +30,9 @@ function ProductsPageContent() {
     // --- 1. KHAI BÁO STATE ---
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
+    const [subcategoriesByCategory, setSubcategoriesByCategory] = useState<
+        Record<string, string[]>
+    >({});
     const [isLoading, setIsLoading] = useState(true);
     const [status, setStatus] = useState({ type: "", message: "" });
     const [pagination, setPagination] = useState({
@@ -39,10 +43,6 @@ function ProductsPageContent() {
     });
 
     // Lấy giá trị search từ URL để khởi tạo ô input
-    const [searchInput, setSearchInput] = useState(
-        searchParams.get("search") || searchParams.get("q") || "",
-    );
-
     // --- 2. LẤY GIÁ TRỊ TỪ URL QUERIES ---
     const selectedCategory = searchParams.get("category") || "";
     const selectedSubcategory = searchParams.get("subcategory") || "";
@@ -52,20 +52,21 @@ function ProductsPageContent() {
         searchParams.get("search") || searchParams.get("q") || "";
     const sort = searchParams.get("sort") || "-soldCount";
     const currentPage = Number(searchParams.get("page") || 1);
+    const requestedPageSize = Number(searchParams.get("limit"));
+    const pageSize = [20, 30, 40].includes(requestedPageSize)
+        ? requestedPageSize
+        : 20;
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const minPrice = minPriceParam ? Number(minPriceParam) : undefined;
     const maxPrice = maxPriceParam ? Number(maxPriceParam) : undefined;
 
     // Đồng bộ ô Input khi URL thay đổi (Ví dụ bấm nút Xóa lọc)
-    useEffect(() => {
-        setSearchInput(searchQuery);
-    }, [searchQuery]);
-
     // Lấy danh sách danh mục khi mount
     useEffect(() => {
         fetchProductCategories().then((data) => {
             setCategories(data?.categories || []);
+            setSubcategoriesByCategory(data?.subcategoriesByCategory || {});
         });
     }, []);
 
@@ -78,7 +79,7 @@ function ProductsPageContent() {
             try {
                 const data = await fetchProducts({
                     page: currentPage,
-                    limit: 20,
+                    limit: pageSize,
                     search: searchQuery,
                     category: selectedCategory,
                     subcategory: selectedSubcategory,
@@ -95,7 +96,7 @@ function ProductsPageContent() {
                             page: 1,
                             pages: 1,
                             total: 0,
-                            limit: 20,
+                            limit: pageSize,
                         },
                     );
                 }
@@ -117,6 +118,7 @@ function ProductsPageContent() {
         };
     }, [
         currentPage,
+        pageSize,
         searchQuery,
         selectedCategory,
         selectedSubcategory,
@@ -173,13 +175,7 @@ function ProductsPageContent() {
         router.replace(queryString ? `/products?${queryString}` : "/products");
     };
 
-    const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        updateFilters({ search: searchInput, page: 1 });
-    };
-
     const handleResetFilters = () => {
-        setSearchInput("");
         updateFilters({
             search: "",
             category: "",
@@ -197,20 +193,19 @@ function ProductsPageContent() {
         <div className="page-shell">
             <Header />
             <main className="main-content container catalog-page">
-                <section className="catalog-hero">
-                    <p className="section-kicker">Cửa hàng</p>
-                    <h1>Khám phá mỹ phẩm phù hợp với bạn</h1>
-                    <form onSubmit={handleSearch} className="catalog-search">
-                        <input
-                            value={searchInput}
-                            onChange={(event) =>
-                                setSearchInput(event.target.value)
-                            }
-                            placeholder="Tìm kiếm sản phẩm, thương hiệu, công dụng..."
-                        />
-                        <button type="submit">Tìm kiếm</button>
-                    </form>
-                </section>
+                <div className="catalog-page-toolbar">
+                    <nav className="catalog-breadcrumbs" aria-label="Đường dẫn">
+                        <Link href="/">Trang chủ</Link>
+                        <span aria-hidden="true">›</span>
+                        <Link href="/products">Sản phẩm</Link>
+                        {selectedCategory ? (
+                            <>
+                                <span aria-hidden="true">›</span>
+                                <strong>{selectedCategory}</strong>
+                            </>
+                        ) : null}
+                    </nav>
+                </div>
 
                 {status.message && (
                     <div
@@ -223,16 +218,17 @@ function ProductsPageContent() {
                     title={selectedCategory || "Tất cả sản phẩm"}
                     products={products}
                     categories={categories}
+                    subcategoriesByCategory={subcategoriesByCategory}
                     brands={brandOptions}
                     skinTypes={skinTypeOptions}
                     selectedCategory={selectedCategory}
                     onCategoryChange={(value) =>
                         updateFilters({ category: value, subcategory: "", page: 1 })
                     }
-                    selectedSubcategory={selectedSubcategory}
-                    onSubcategoryChange={(value) =>
-                        updateFilters({ subcategory: value, page: 1 })
+                    onCategorySelectionChange={(category, subcategory) =>
+                        updateFilters({ category, subcategory, page: 1 })
                     }
+                    selectedSubcategory={selectedSubcategory}
                     selectedBrand={selectedBrand}
                     onBrandChange={(value) =>
                         updateFilters({ brand: value, page: 1 })
@@ -244,6 +240,10 @@ function ProductsPageContent() {
                     sort={sort}
                     onSortChange={(value) =>
                         updateFilters({ sort: value, page: 1 })
+                    }
+                    pageSize={pageSize}
+                    onPageSizeChange={(value) =>
+                        updateFilters({ limit: value, page: 1 })
                     }
                     priceRange={{
                         min: minPrice,

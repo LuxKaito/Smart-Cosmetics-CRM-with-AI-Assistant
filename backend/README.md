@@ -12,8 +12,8 @@ OAuth, guest carts, PayOS payments, RabbitMQ events, and Jest/Supertest tests.
 
 - Customer auth: register, verify email, login, Google login, refresh token,
   logout, profile, shipping addresses, password change, and favorite products.
-- Product catalog backed by MongoDB only, with Excel import from
-  `data/Hasaki_Data_Final.xlsx`.
+- Product catalog backed by MongoDB, imported from `data/LamThao_Data.xlsx`
+  with product variants and category mappings.
 - Guest and authenticated customer carts using an httpOnly `cart_token` cookie.
 - Checkout summary, order creation, customer order history, order detail, and
   customer cancellation.
@@ -53,7 +53,7 @@ backend/
 ├── tests/
 │   ├── api/
 │   └── unit/
-├── data/Hasaki_Data_Final.xlsx
+├── data/LamThao_Data.xlsx
 ├── docker-compose.yml
 └── README.md
 ```
@@ -159,7 +159,7 @@ npm start
 ```bash
 npm run dev                 # nodemon src/server.js
 npm start                   # node src/server.js
-npm run seed:products       # import data/Hasaki_Data_Final.xlsx
+npm run seed:products       # replace the catalog from data/LamThao_Data.xlsx
 npm run seed:admin          # seed admin data from env/defaults
 npm run seed:samples        # sample customers, staff, carts, orders
 npm run seed:clear-catalog  # clear imported catalog data

@@ -24,6 +24,8 @@ export interface Product {
     subcategory?: string;
     category_level_1?: string;
     category_level_2?: string;
+    category_level_3?: string;
+    category_level_4?: string;
     benefits?: string;
     product_type?: string;
     description?: string;
@@ -71,4 +73,5 @@ export interface ProductQuery {
     maxPrice?: number;
     sort?: string;
     includeInactive?: boolean;
+    inStock?: boolean;
 }

@@ -105,11 +105,11 @@ export default function EditorialListingPage({
                                 </div>
                             ))}
                         </div>
-                        <button
-                            type="button"
-                            className="mx-auto mt-6 block rounded-xl border border-[#F4C9D7] bg-white px-5 py-3 text-sm font-bold text-[#B14063] transition hover:bg-[#FFF0F5]">
-                            Xem thêm
-                        </button>
+                        <div className="mx-auto mt-6 w-fit">
+                            <button type="button" className="view-more-action">
+                                Xem thêm
+                            </button>
+                        </div>
                     </section>
                 </div>
             </main>

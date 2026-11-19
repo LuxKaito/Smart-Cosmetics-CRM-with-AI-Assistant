@@ -103,12 +103,15 @@ const normalizeList = (
     return (items || []).map((item) => normalizeProduct(item) as Product);
 };
 
-export async function fetchHomeProducts(limit = 18): Promise<Product[]> {
+export async function fetchHomeProducts(
+    limit = 18,
+    sort?: string,
+): Promise<Product[]> {
     const data = await apiRequest<{ items?: Product[] } | Product[]>({
         url: "/products",
-        params: { limit },
+        params: { limit, inStock: true, sort },
     });
-    return normalizeList(data);
+    return normalizeList(data).filter(isAvailableProduct);
 }
 
 export async function fetchProducts(
@@ -121,7 +124,7 @@ export async function fetchProducts(
                 : 1,
         limit:
             Number.isFinite(query.limit) && (query.limit as number) > 0
-                ? Math.min(query.limit as number, 20)
+                ? Math.min(query.limit as number, 40)
                 : 20,
         sort: query.sort || undefined,
         search: query.search?.trim() || undefined,
@@ -137,6 +140,7 @@ export async function fetchProducts(
             Number.isFinite(query.maxPrice) && (query.maxPrice as number) > 0
                 ? query.maxPrice
                 : undefined,
+        inStock: query.inStock === true ? true : undefined,
     };
 
     if (
@@ -162,7 +166,9 @@ export async function fetchProducts(
     });
 
     return {
-        items: normalizeList(data),
+        items: normalizeList(data).filter((product) =>
+            safeQuery.inStock ? isAvailableProduct(product) : true,
+        ),
         pagination: data.pagination || {
             page: 1,
             limit: safeQuery?.limit || 20,
@@ -170,6 +176,12 @@ export async function fetchProducts(
             pages: 1,
         },
     };
+}
+
+function isAvailableProduct(product: Product) {
+    if (product.stock === undefined || product.stock === null) return true;
+    const stock = Number(product.stock);
+    return !Number.isFinite(stock) || stock > 0;
 }
 
 export async function fetchProductById(id: string): Promise<Product> {
@@ -182,12 +194,19 @@ export async function fetchProductById(id: string): Promise<Product> {
 
 export async function fetchProductCategories(): Promise<{
     categories: string[];
+    subcategoriesByCategory: Record<string, string[]>;
 }> {
     try {
-        const data = await apiRequest<{ categories: string[] }>({
+        const data = await apiRequest<{
+            categories: string[];
+            subcategoriesByCategory?: Record<string, string[]>;
+        }>({
             url: "/products/categories",
         });
-        return data;
+        return {
+            categories: data?.categories || [],
+            subcategoriesByCategory: data?.subcategoriesByCategory || {},
+        };
     } catch {
         const { items } = await fetchProducts({ page: 1, limit: 20 });
         const categorySet = new Set<string>();
@@ -200,7 +219,10 @@ export async function fetchProductCategories(): Promise<{
                 categorySet.add(item.category);
             }
         });
-        return { categories: Array.from(categorySet) };
+        return {
+            categories: Array.from(categorySet),
+            subcategoriesByCategory: {},
+        };
     }
 }
 

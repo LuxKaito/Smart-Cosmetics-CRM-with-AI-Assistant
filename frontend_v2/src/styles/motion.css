@@ -1,0 +1,42 @@
+/* Shared timing across storefront, account, checkout and management pages. */
+.promo-wide-content > span {
+    display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+    main :is(.product-card, .category-icon-card, [data-motion-card]) {
+        transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 350ms ease;
+    }
+
+    main :is(.product-card, .category-icon-card, [data-motion-card]):hover {
+        transform: translateY(-4px);
+    }
+
+    main :is(.product-hero img, .category-icon-card img, [data-motion-card] img) {
+        transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    main :is(.product-card, .category-icon-card, [data-motion-card]):hover img {
+        transform: scale(1.035);
+    }
+
+    main :is(button, a) {
+        transition-duration: 250ms;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto !important; }
+    .hero-carousel-track,
+    .hero-carousel-slide img {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+    main :is(.product-card, .category-icon-card, [data-motion-card]),
+    main :is(.product-card, .category-icon-card, [data-motion-card]) img {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+}

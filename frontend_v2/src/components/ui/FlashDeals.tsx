@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import type { Product } from "../../types/product";
 import ProductCard, { enrichProducts } from "./ProductCard";
 
@@ -9,6 +9,7 @@ interface FlashDealsProps {
     deals: Product[];
     title?: string;
     showTimer?: boolean;
+    showTitle?: boolean;
     variant?: "hot" | "plain";
 }
 
@@ -16,6 +17,7 @@ export default function FlashDeals({
     deals,
     title = "Flash Sale",
     showTimer = true,
+    showTitle = true,
     variant = "hot",
 }: FlashDealsProps) {
     const trackRef = useRef<HTMLDivElement | null>(null);
@@ -75,24 +77,28 @@ export default function FlashDeals({
     const timerParts = [hours, minutes, seconds].map((value) =>
         String(value).padStart(2, "0"),
     );
+    const countdown = showTimer ? (
+        <div className="flash-deals-countdown">
+            <span className="flash-deals-countdown-label">Kết thúc sau</span>
+            <div className="flash-deals-timer" aria-label="Thời gian đếm ngược">
+                <span>{timerParts[0]}</span>
+                <span>:</span>
+                <span>{timerParts[1]}</span>
+                <span>:</span>
+                <span>{timerParts[2]}</span>
+            </div>
+        </div>
+    ) : null;
 
-    return (
+    const content = (
         <section className={sectionClassName} aria-label={title}>
             <div className="flash-deals-header">
                 <div className="flash-deals-title">
-                    <h2>{title}</h2>
-                    {showTimer ? (
-                        <div
-                            className="flash-deals-timer"
-                            aria-label="Thời gian đếm ngược">
-                            <span>{timerParts[0]}</span>
-                            <span>:</span>
-                            <span>{timerParts[1]}</span>
-                            <span>:</span>
-                            <span>{timerParts[2]}</span>
-                        </div>
-                    ) : null}
+                    <h2 className={showTitle ? undefined : "flash-deals-visually-hidden"}>
+                        {title}
+                    </h2>
                 </div>
+                {countdown}
                 <Link href="/products" className="flash-deals-all">
                     Xem tất cả
                 </Link>
@@ -101,14 +107,14 @@ export default function FlashDeals({
             <div className="flash-deals-track-wrap">
                 <button
                     type="button"
-                    className="flash-deals-nav is-left"
+                    className="flash-deals-nav home-carousel-arrow home-carousel-arrow--prev is-left"
                     aria-label="Xem sản phẩm trước"
                     onClick={() => scrollByCards(-1)}>
                     ‹
                 </button>
                 <button
                     type="button"
-                    className="flash-deals-nav is-right"
+                    className="flash-deals-nav home-carousel-arrow home-carousel-arrow--next is-right"
                     aria-label="Xem sản phẩm tiếp theo"
                     onClick={() => scrollByCards(1)}>
                     ›
@@ -125,6 +131,9 @@ export default function FlashDeals({
                     ))}
                 </div>
             </div>
+
         </section>
     );
+
+    return content;
 }

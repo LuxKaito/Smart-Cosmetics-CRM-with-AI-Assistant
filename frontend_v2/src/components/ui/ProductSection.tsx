@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
+import { ChevronDown } from "lucide-react";
 import { productFilterSections } from "../../data/productFilters";
 import { getDiscountPercent } from "../../lib/pricing";
 import type { Pagination } from "../../types/api";
@@ -108,21 +109,21 @@ interface ProductSectionProps {
               id?: string;
           }
     >;
+    subcategoriesByCategory?: Record<string, string[]>;
     brands?: string[];
     selectedCategory?: string;
     onCategoryChange?: (value: string) => void;
+    onCategorySelectionChange?: (category: string, subcategory: string) => void;
     selectedBrand?: string;
     onBrandChange?: (value: string) => void;
-    subcategories?: Array<
-        string | { label?: string; value?: string; name?: string }
-    >;
     selectedSubcategory?: string;
-    onSubcategoryChange?: (value: string) => void;
     skinTypes?: string[];
     selectedSkinType?: string;
     onSkinTypeChange?: (value: string) => void;
     sort?: string;
     onSortChange?: (value: string) => void;
+    pageSize?: number;
+    onPageSizeChange?: (value: number) => void;
     priceRange?: { min?: number; max?: number };
     onPriceApply?: (min: number, max: number) => void;
     pagination?: Pagination;
@@ -137,19 +138,21 @@ export default function ProductSection({
     title,
     products,
     categories = [],
+    subcategoriesByCategory = {},
     brands = [],
     selectedCategory = "",
     onCategoryChange,
+    onCategorySelectionChange,
     selectedBrand = "",
     onBrandChange,
-    subcategories = [],
     selectedSubcategory = "",
-    onSubcategoryChange,
     skinTypes = [],
     selectedSkinType = "",
     onSkinTypeChange,
     sort = "-soldCount",
     onSortChange,
+    pageSize = 20,
+    onPageSizeChange,
     priceRange = { min: 0, max: 2000000 },
     onPriceApply,
     pagination = { page: 1, pages: 1, total: 0, limit: 20 },
@@ -195,6 +198,7 @@ export default function ProductSection({
     const priceStep = 50000;
     const [draftMinPrice, setDraftMinPrice] = useState(minPrice);
     const [draftMaxPrice, setDraftMaxPrice] = useState(maxPrice);
+    const [expandedCategory, setExpandedCategory] = useState(selectedCategory);
     const hasBaseProducts = Array.isArray(products) && products.length > 0;
     const denominator = Math.max(1, maxPrice - minPrice);
     const minRatio = ((draftMinPrice - minPrice) / denominator) * 100;
@@ -207,6 +211,10 @@ export default function ProductSection({
         setDraftMinPrice(minPrice);
         setDraftMaxPrice(maxPrice);
     }, [minPrice, maxPrice]);
+
+    useEffect(() => {
+        if (selectedCategory) setExpandedCategory(selectedCategory);
+    }, [selectedCategory]);
 
     const enrichedProducts = hasBaseProducts
         ? products.map((item, index) => {
@@ -252,8 +260,6 @@ export default function ProductSection({
     const displayedProducts = enrichedProducts;
 
     const hasVisibleProducts = displayedProducts.length > 0;
-    const totalCount = pagination?.total || enrichedProducts.length;
-
     const handleTabChange = (tab: string) => {
         const nextSort = tabToSort[tab];
         onSortChange?.(nextSort || "-soldCount");
@@ -276,7 +282,6 @@ export default function ProductSection({
     const handleResetFilters = () => {
         onCategoryChange?.("");
         onBrandChange?.("");
-        onSubcategoryChange?.("");
         onSkinTypeChange?.("");
         onResetFilters?.();
     };
@@ -292,6 +297,10 @@ export default function ProductSection({
                 <aside
                     className="product-filter-panel"
                     aria-label="Bộ lọc sản phẩm">
+                    <header className="catalog-sidebar-heading">
+                        <h1>{title}</h1>
+                        <p>Bạn đang tìm gì?</p>
+                    </header>
                     <div className="filter-actions">
                         <button
                             type="button"
@@ -301,55 +310,100 @@ export default function ProductSection({
                         </button>
                     </div>
                     {categories.length > 0 ? (
-                        <section className="filter-block">
-                            <h3>DANH MỤC</h3>
-                            <ul
-                                className={`filter-list${categories.length > 7 ? " is-scrollable" : ""}`}>
-                                <li>
-                                    <label htmlFor="category-all">
-                                        <input
-                                            id="category-all"
-                                            type="radio"
-                                            name="category"
-                                            checked={!selectedCategory}
-                                            onChange={() =>
-                                                onCategoryChange?.("")
-                                            }
-                                        />
-                                        <span>Tất cả</span>
-                                    </label>
-                                </li>
+                        <section className="filter-block filter-block--categories">
+                            <h3>Danh mục sản phẩm</h3>
+                            <div className="catalog-category-tree">
+                                <button
+                                    type="button"
+                                    className={`catalog-category-all${!selectedCategory ? " is-selected" : ""}`}
+                                    onClick={() => {
+                                        setExpandedCategory("");
+                                        onCategorySelectionChange?.("", "");
+                                    }}>
+                                    Tất cả sản phẩm
+                                </button>
                                 {categories.map((item) => {
                                     const option = normalizeOption(item);
-                                    const id = `category-${option.value}`
+                                    const children = subcategoriesByCategory[
+                                        option.value
+                                    ] || [];
+                                    const isExpanded =
+                                        expandedCategory === option.value;
+                                    const isSelected =
+                                        selectedCategory === option.value;
+                                    const id = `catalog-category-${option.value}`
                                         .replace(/\s+/g, "-")
                                         .toLowerCase();
+
                                     return (
-                                        <li key={id}>
-                                            <label htmlFor={id}>
-                                                <input
-                                                    id={id}
-                                                    type="radio"
-                                                    name="category"
-                                                    checked={
-                                                        selectedCategory ===
-                                                        option.value
-                                                    }
-                                                    onChange={() =>
-                                                        onCategoryChange?.(
-                                                            option.value,
-                                                        )
-                                                    }
-                                                />
-                                                <span>{option.label}</span>
-                                            </label>
-                                        </li>
+                                        <div
+                                            key={id}
+                                            className={`catalog-category-node${isSelected ? " is-selected" : ""}${isExpanded ? " is-expanded" : ""}`}>
+                                            <div className="catalog-category-parent-row">
+                                                <button
+                                                    type="button"
+                                                    className="catalog-category-parent"
+                                                    aria-pressed={isSelected}
+                                                    onClick={() => {
+                                                        setExpandedCategory(option.value);
+                                                        onCategorySelectionChange?.(option.value, "");
+                                                    }}>
+                                                    {option.label}
+                                                </button>
+                                                {children.length > 0 ? (
+                                                    <button
+                                                        type="button"
+                                                        className="catalog-category-toggle"
+                                                        aria-label={`${isExpanded ? "Thu gọn" : "Mở rộng"} ${option.label}`}
+                                                        aria-expanded={isExpanded}
+                                                        aria-controls={`${id}-children`}
+                                                        onClick={() =>
+                                                            setExpandedCategory(
+                                                                isExpanded ? "" : option.value,
+                                                            )
+                                                        }>
+                                                        <ChevronDown
+                                                            aria-hidden="true"
+                            size={18}
+                            strokeWidth={2.75}
+                                                        />
+                                                    </button>
+                                                ) : null}
+                                            </div>
+                                            {isExpanded && children.length > 0 ? (
+                                                <ul
+                                                    id={`${id}-children`}
+                                                    className="catalog-category-children">
+                                                    {children.map((child) => {
+                                                        const isChildSelected =
+                                                            isSelected &&
+                                                            selectedSubcategory === child;
+                                                        return (
+                                                            <li key={child}>
+                                                                <button
+                                                                    type="button"
+                                                                    className={`catalog-category-child${isChildSelected ? " is-selected" : ""}`}
+                                                                    aria-pressed={isChildSelected}
+                                                                    onClick={() => {
+                                                                        onCategorySelectionChange?.(
+                                                                            option.value,
+                                                                            isChildSelected ? "" : child,
+                                                                        );
+                                                                    }}>
+                                                                    {child}
+                                                                </button>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            ) : null}
+                                        </div>
                                     );
                                 })}
-                            </ul>
+                            </div>
                         </section>
                     ) : (
-                        <section className="filter-block">
+                        <section className="filter-block filter-block--categories">
                             <h3>DANH MỤC</h3>
                             <p className="filter-empty">
                                 Chưa có dữ liệu danh mục từ CSDL.
@@ -393,56 +447,6 @@ export default function ProductSection({
                                                     }
                                                 />
                                                 <span>{brand}</span>
-                                            </label>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </section>
-                    ) : null}
-
-                    {subcategories.length > 0 ? (
-                        <section className="filter-block">
-                            <h3>DANH MỤC CON</h3>
-                            <ul
-                                className={`filter-list${subcategories.length > 7 ? " is-scrollable" : ""}`}>
-                                <li>
-                                    <label htmlFor="subcategory-all">
-                                        <input
-                                            id="subcategory-all"
-                                            type="radio"
-                                            name="subcategory"
-                                            checked={!selectedSubcategory}
-                                            onChange={() =>
-                                                onSubcategoryChange?.("")
-                                            }
-                                        />
-                                        <span>Tất cả</span>
-                                    </label>
-                                </li>
-                                {subcategories.map((item) => {
-                                    const option = normalizeOption(item);
-                                    const id = `subcategory-${option.value}`
-                                        .replace(/\s+/g, "-")
-                                        .toLowerCase();
-                                    return (
-                                        <li key={id}>
-                                            <label htmlFor={id}>
-                                                <input
-                                                    id={id}
-                                                    type="radio"
-                                                    name="subcategory"
-                                                    checked={
-                                                        selectedSubcategory ===
-                                                        option.value
-                                                    }
-                                                    onChange={() =>
-                                                        onSubcategoryChange?.(
-                                                            option.value,
-                                                        )
-                                                    }
-                                                />
-                                                <span>{option.label}</span>
                                             </label>
                                         </li>
                                     );
@@ -544,13 +548,9 @@ export default function ProductSection({
                 </aside>
 
                 <div className="product-content">
-                    <div className="section-head">
-                        <h2>
-                            {title}{" "}
-                            <span className="product-count">
-                                ({totalCount} sản phẩm)
-                            </span>
-                        </h2>
+
+                    <div className="catalog-sort-toolbar">
+                        <span className="catalog-sort-label">Sắp xếp</span>
                         <div
                             className="pill-tabs"
                             role="tablist"
@@ -567,6 +567,19 @@ export default function ProductSection({
                                 </button>
                             ))}
                         </div>
+                        <label className="catalog-page-size">
+                            <span className="sr-only">Số sản phẩm mỗi trang</span>
+                            <select
+                                value={pageSize}
+                                aria-label="Số sản phẩm mỗi trang"
+                                onChange={(event) =>
+                                    onPageSizeChange?.(Number(event.target.value))
+                                }>
+                                <option value={20}>Hiển thị 20</option>
+                                <option value={30}>Hiển thị 30</option>
+                                <option value={40}>Hiển thị 40</option>
+                            </select>
+                        </label>
                     </div>
 
                     {isLoading ? (
