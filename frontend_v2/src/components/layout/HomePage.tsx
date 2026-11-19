@@ -36,6 +36,12 @@ function productsHref(filters: {
     return `/products?${params.toString()}`;
 }
 
+function isAvailableProduct(product: Product) {
+    if (product.stock === undefined || product.stock === null) return true;
+    const stock = Number(product.stock);
+    return !Number.isFinite(stock) || stock > 0;
+}
+
 const cleanFeatureIcons = [
     {
         label: "Chăm sóc da",
@@ -98,16 +104,18 @@ export default function HomePage() {
     } = useHomeData();
 
     const { data: remoteProducts = [] } = useQuery<Product[]>({
-        queryKey: ["home-products"],
-        queryFn: () => fetchHomeProducts(36),
-    });
-    const { data: hotProducts = [] } = useQuery<Product[]>({
-        queryKey: ["home-hot-products"],
+        queryKey: ["home-products", 100, "in-stock"],
         queryFn: () => fetchHomeProducts(100),
     });
+    const { data: bestSellerProducts = [] } = useQuery<Product[]>({
+        queryKey: ["home-best-sellers", 100, "sold-count", "in-stock"],
+        queryFn: () => fetchHomeProducts(100, "-soldCount"),
+    });
+    const hotProducts = remoteProducts;
     const { data: newArrivalResult } = useQuery({
-        queryKey: ["home-new-arrivals"],
-        queryFn: () => fetchProducts({ page: 1, limit: 10, sort: "-createdAt" }),
+        queryKey: ["home-new-arrivals", 20, "in-stock"],
+        queryFn: () =>
+            fetchProducts({ page: 1, limit: 20, sort: "-createdAt", inStock: true }),
     });
     const { data: publicVouchers = [] } = useQuery({
         queryKey: ["public-vouchers"],
@@ -115,9 +123,13 @@ export default function HomePage() {
     });
 
     const flashDealsData =
-        remoteProducts.length > 0 ? remoteProducts.slice(0, 10) : flashDeals;
+        remoteProducts.length > 0
+            ? remoteProducts.slice(0, 20)
+            : flashDeals.filter(isAvailableProduct);
     const bestSellerData =
-        remoteProducts.length > 0 ? remoteProducts.slice(10, 18) : bestSellers;
+        bestSellerProducts.length > 0
+            ? bestSellerProducts
+            : bestSellers.filter(isAvailableProduct);
     return (
         <div className="page-shell beauty-storefront">
             <Header />

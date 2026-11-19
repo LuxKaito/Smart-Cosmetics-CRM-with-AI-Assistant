@@ -1207,7 +1207,6 @@ main,
 .search-wrap button,
 .coupon-body button,
 .product-add-btn,
-.catalog-search button,
 .auth-submit,
 .chatbot-trigger,
 .chatbot-input button {
@@ -1736,6 +1735,27 @@ main,
     transform: scale(1.015);
 }
 
+.top-selling-carousel {
+    position: relative;
+    min-width: 0;
+    min-height: 836px;
+}
+
+.top-selling-arrow {
+    position: absolute;
+    z-index: 5;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.top-selling-arrow.home-carousel-arrow--prev {
+    left: -14px;
+}
+
+.top-selling-arrow.home-carousel-arrow--next {
+    right: -14px;
+}
+
 .top-selling-products {
     display: grid;
     min-width: 0;
@@ -1778,6 +1798,10 @@ main,
         gap: 10px;
     }
 
+    .top-selling-carousel {
+        min-height: 1320px;
+    }
+
     .top-selling-products {
         min-height: 1320px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1803,6 +1827,18 @@ main,
         grid-template-columns: minmax(0, 1fr);
         min-height: 0;
         grid-template-rows: auto minmax(846px, auto);
+    }
+
+    .top-selling-carousel {
+        min-height: 846px;
+    }
+
+    .top-selling-arrow.home-carousel-arrow--prev {
+        left: -8px;
+    }
+
+    .top-selling-arrow.home-carousel-arrow--next {
+        right: -8px;
     }
 
     .top-selling-banner {
@@ -1979,6 +2015,26 @@ main,
 .product-card--catalog:not(.empty) .hot-product-image {
     object-fit: contain;
     object-position: center;
+}
+
+.product-card--catalog:not(.empty) .product-image-primary,
+.product-card--catalog:not(.empty) .product-image-alternate {
+    transition: opacity 220ms ease;
+}
+
+.product-card--catalog:not(.empty) .product-image-alternate {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.product-card--catalog:not(.empty):hover .product-image-primary,
+.product-card--catalog:not(.empty):focus-within .product-image-primary {
+    opacity: 0;
+}
+
+.product-card--catalog:not(.empty):hover .product-image-alternate,
+.product-card--catalog:not(.empty):focus-within .product-image-alternate {
+    opacity: 1;
 }
 
 .product-card--catalog:not(.empty) > .brand {
@@ -2544,9 +2600,9 @@ main,
 
 .comprehensive-care-products {
     display: grid;
-    min-height: 660px;
+    min-height: 0;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(290px, auto));
     align-items: stretch;
     gap: 12px;
 }
@@ -2583,6 +2639,10 @@ main,
 
 .comprehensive-care-products > .product-card--catalog > .price-row {
     min-height: 22px;
+}
+
+.comprehensive-care-products > .product-card--catalog:not(.empty) .free-shipping-badge {
+    display: inline-flex;
 }
 
 .comprehensive-care-products > .product-card--catalog .product-buy-button {
@@ -2697,9 +2757,9 @@ main,
     }
 
     .comprehensive-care-products {
-        min-height: 700px;
+        min-height: 0;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        grid-template-rows: repeat(3, minmax(0, 1fr));
+        grid-template-rows: repeat(3, minmax(290px, auto));
     }
 
     .comprehensive-care-message {
@@ -2847,5 +2907,186 @@ main,
         animation-iteration-count: 1 !important;
         scroll-behavior: auto !important;
         transition-duration: 0.01ms !important;
+    }
+}
+
+/* Shared appearance for every carousel control on the homepage. */
+.home-carousel-arrow:not(.hero-carousel-arrow) {
+    position: absolute;
+    z-index: 5;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.home-carousel-arrow,
+.brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow {
+    box-sizing: border-box;
+    display: inline-grid;
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    border-radius: 50%;
+    background: rgba(75, 65, 73, 0.82);
+    color: #fff;
+    box-shadow: 0 2px 7px rgba(36, 27, 33, 0.16);
+    cursor: pointer;
+    font-size: 0;
+    line-height: 0;
+    appearance: none;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.home-carousel-arrow::before,
+.brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow::before {
+    content: "";
+    display: block;
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+}
+
+.home-carousel-arrow--prev::before {
+    transform: rotate(135deg);
+    margin-left: 3px;
+}
+
+.home-carousel-arrow--next::before {
+    transform: rotate(-45deg);
+    margin-right: 3px;
+}
+
+.home-carousel-arrow > svg {
+    display: none;
+}
+
+.home-carousel-arrow:hover:not(:disabled),
+.brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.88);
+    background: rgba(53, 44, 51, 0.94);
+    color: #fff;
+    box-shadow: 0 3px 9px rgba(36, 27, 33, 0.22);
+}
+
+.home-carousel-arrow:focus-visible {
+    outline: 2px solid #f45f91;
+    outline-offset: 3px;
+}
+
+.home-carousel-arrow:disabled {
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.42;
+}
+
+@media (max-width: 720px) {
+    .home-carousel-arrow,
+    .brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+}
+
+/* Keep homepage section arrows visually consistent with the hero controls. */
+.home-carousel-arrow:not(.hero-carousel-arrow),
+.brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    border-radius: 50%;
+    background: #f98bb0;
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(130, 38, 78, 0.2);
+    font-family: Arial, sans-serif;
+    font-size: 0;
+    font-weight: 400;
+    line-height: 0;
+}
+
+.home-carousel-arrow:not(.hero-carousel-arrow)::before,
+.brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow::before {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: 19px;
+    height: 19px;
+    margin: 0;
+    transform: translate(-50%, -50%);
+    border: 0;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+}
+
+.home-carousel-arrow:not(.hero-carousel-arrow).home-carousel-arrow--prev::before,
+.brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow--prev::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m15 18-6-6 6-6'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m15 18-6-6 6-6'/%3E%3C/svg%3E");
+}
+
+.home-carousel-arrow:not(.hero-carousel-arrow).home-carousel-arrow--next::before,
+.brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow--next::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E");
+}
+
+.home-carousel-arrow:not(.hero-carousel-arrow):hover:not(:disabled),
+.brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow:hover:not(:disabled) {
+    border-color: #fff;
+    background: #e93470;
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(130, 38, 78, 0.2);
+}
+
+/* Smaller pink controls for the main hero banner. */
+.hero-carousel-arrow.home-carousel-arrow {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+    border-color: rgba(255, 255, 255, 0.88);
+    background: #f98bb0;
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(130, 38, 78, 0.2);
+}
+
+.hero-carousel-arrow.home-carousel-arrow::before {
+    display: none;
+}
+
+.hero-carousel-arrow.home-carousel-arrow > svg {
+    display: block;
+    width: 19px;
+    height: 19px;
+    stroke-width: 3;
+}
+
+.hero-carousel-arrow.home-carousel-arrow:hover:not(:disabled) {
+    border-color: #fff;
+    background: #e93470;
+    color: #fff;
+}
+
+@media (max-width: 720px) {
+    .home-carousel-arrow:not(.hero-carousel-arrow),
+    .brand-showcase--orbit .brand-showcase-nav.home-carousel-arrow {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+
+    .hero-carousel-arrow.home-carousel-arrow {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
     }
 }

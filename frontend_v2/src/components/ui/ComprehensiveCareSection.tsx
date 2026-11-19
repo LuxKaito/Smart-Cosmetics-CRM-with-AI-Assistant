@@ -139,7 +139,7 @@ export default function ComprehensiveCareSection() {
         isError,
         refetch,
     } = useQuery<ProductListResult>({
-        queryKey: ["comprehensive-care-products", activeGroup.id, activeTab.id, page],
+        queryKey: ["comprehensive-care-products", activeGroup.id, activeTab.id, page, "in-stock"],
         queryFn: () =>
             fetchProducts({
                 page,
@@ -147,6 +147,7 @@ export default function ComprehensiveCareSection() {
                 category: productCategory,
                 subcategory: activeTab.subcategory,
                 search: activeTab.search,
+                inStock: true,
             }),
         staleTime: 5 * 60 * 1000,
     });
@@ -204,7 +205,7 @@ export default function ComprehensiveCareSection() {
                     <div className="comprehensive-care-product-stage" aria-busy={isPending}>
                         <button
                             type="button"
-                            className="comprehensive-care-arrow is-prev"
+                            className="comprehensive-care-arrow home-carousel-arrow home-carousel-arrow--prev is-prev"
                             aria-label="Xem trang sản phẩm trước"
                             disabled={page <= 1 || isPending}
                             onClick={() => setPage((current) => Math.max(1, current - 1))}>
@@ -241,7 +242,7 @@ export default function ComprehensiveCareSection() {
 
                         <button
                             type="button"
-                            className="comprehensive-care-arrow is-next"
+                            className="comprehensive-care-arrow home-carousel-arrow home-carousel-arrow--next is-next"
                             aria-label="Xem trang sản phẩm tiếp theo"
                             disabled={page >= pageCount || isPending}
                             onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>

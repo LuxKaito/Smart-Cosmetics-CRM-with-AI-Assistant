@@ -107,14 +107,14 @@ export default function FlashDeals({
             <div className="flash-deals-track-wrap">
                 <button
                     type="button"
-                    className="flash-deals-nav is-left"
+                    className="flash-deals-nav home-carousel-arrow home-carousel-arrow--prev is-left"
                     aria-label="Xem sản phẩm trước"
                     onClick={() => scrollByCards(-1)}>
                     ‹
                 </button>
                 <button
                     type="button"
-                    className="flash-deals-nav is-right"
+                    className="flash-deals-nav home-carousel-arrow home-carousel-arrow--next is-right"
                     aria-label="Xem sản phẩm tiếp theo"
                     onClick={() => scrollByCards(1)}>
                     ›
