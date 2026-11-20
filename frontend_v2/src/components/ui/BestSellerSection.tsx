@@ -75,6 +75,7 @@ export default function BestSellerSection({ products }: { products: Product[] })
     const pageCount = Math.ceil(filteredProducts.length / 6);
     const pageIndex = pageCount > 0 ? Math.min(activePage, pageCount - 1) : 0;
     const displayedProducts = filteredProducts.slice(pageIndex * 6, pageIndex * 6 + 6);
+    const showBanner = activeCategory === "all";
 
     const changePage = (direction: number) => {
         if (pageCount < 2) return;
@@ -115,20 +116,22 @@ export default function BestSellerSection({ products }: { products: Product[] })
                 </button>
             </nav>
 
-            <div className="top-selling-content">
-                <Link
-                    className="top-selling-banner"
-                    href="/products?search=mat%20na&page=1"
-                    aria-label="Khám phá sản phẩm mặt nạ bán chạy">
-                    <Image
-                        src="/banner/top-selling-masks.png"
-                        alt="Banner sản phẩm mặt nạ chăm da"
-                        fill
-                        sizes="(max-width: 800px) 100vw, (max-width: 1200px) 30vw, 390px"
-                        className="top-selling-banner-image"
-                        priority={false}
-                    />
-                </Link>
+            <div className={`top-selling-content${showBanner ? " has-banner" : ""}`}>
+                {showBanner ? (
+                    <Link
+                        className="top-selling-banner"
+                        href="/products"
+                        aria-label="Xem toàn bộ sản phẩm bán chạy">
+                        <Image
+                            src="/banner/top-selling-luxberry.png"
+                            alt="Top sản phẩm bán chạy LuxBerry — Không thể bỏ lỡ"
+                            fill
+                            sizes="(max-width: 700px) 100vw, (max-width: 1100px) 34vw, 390px"
+                            className="top-selling-banner-image"
+                            priority={false}
+                        />
+                    </Link>
+                ) : null}
 
                 {displayedProducts.length > 0 ? (
                     <div className="top-selling-carousel">
