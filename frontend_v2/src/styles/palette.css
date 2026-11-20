@@ -1711,9 +1711,13 @@ main,
 .top-selling-content {
     display: grid;
     min-height: 836px;
-    grid-template-columns: minmax(280px, 0.95fr) minmax(0, 2.05fr);
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
     gap: 14px;
+}
+
+.top-selling-content.has-banner {
+    grid-template-columns: minmax(280px, 0.95fr) minmax(0, 2.05fr);
 }
 
 .top-selling-banner {
@@ -1793,9 +1797,13 @@ main,
     }
 
     .top-selling-content {
-        grid-template-columns: minmax(210px, 0.9fr) minmax(0, 2.1fr);
+        grid-template-columns: minmax(0, 1fr);
         min-height: 1320px;
         gap: 10px;
+    }
+
+    .top-selling-content.has-banner {
+        grid-template-columns: minmax(210px, 0.9fr) minmax(0, 2.1fr);
     }
 
     .top-selling-carousel {
