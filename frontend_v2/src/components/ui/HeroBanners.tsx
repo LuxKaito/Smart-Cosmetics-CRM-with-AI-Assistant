@@ -6,9 +6,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const mainBanners = [
+    { image: "/banner/black-friday-luxberry.png", label: "Black Friday LuxBerry", href: "/products" },
     { image: "/banner/banner2.png", label: "Ưu đãi mỹ phẩm LuxBerry", href: "/products" },
     { image: "/banner/banner3.png", label: "Giải pháp chăm da MD Care", href: "/products?search=MD%20Care" },
-    { image: "/banner/banner4.png", label: "Mỹ phẩm nổi bật LuxBerry", href: "/products" },
 ];
 
 const sideBanners = [
