@@ -2714,7 +2714,7 @@ main,
 
 .product-card--catalog:not(.empty) .main-price {
     order: 2;
-    color: #F21D2B;
+    color: var(--lux-product-price);
     font-size: 13px;
     font-weight: 800;
 }

@@ -38,6 +38,7 @@ src/app/layout.tsx
 | `src/components/ui/BestSellerSection.tsx` | Section “TOP SẢN PHẨM BÁN CHẠY”; lọc sản phẩm theo danh mục, dùng banner chiến dịch và tái sử dụng `ProductCard` với dữ liệu từ `HomePage`. |
 | `src/components/ui/ProductCard.tsx` | Thẻ sản phẩm, tiện ích `enrichProducts` và chế độ `realDataOnly` để dùng style chung mà không điền số liệu mẫu. |
 | `src/components/ui/ProductSection.tsx` | Khu vực danh sách/lọc sản phẩm; dùng `ProductCard`. |
+| `src/components/ui/CartRecommendations.tsx` | Dãy gợi ý cuối trang giỏ hàng; lấy sản phẩm theo danh mục và lượt bán từ `productService`, hiển thị bằng `ProductCard`. |
 | `src/components/ui/BrandStrip.tsx` | Trình bày thương hiệu. |
 | `src/components/ui/ComprehensiveCareSection.tsx` | Section “CHĂM SÓC TOÀN DIỆN” ngay sau BrandStrip; lọc nhóm danh mục và trang sản phẩm từ `productService`, tái dùng `ProductCard`. |
 | `src/components/ui/SuggestedSection.tsx` | Khu vực gợi ý; dùng `ProductCard`. |
