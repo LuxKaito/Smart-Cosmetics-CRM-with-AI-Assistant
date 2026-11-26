@@ -19,6 +19,7 @@ export interface Product {
     thumbnail?: string;
     thumb?: string;
     images?: string[];
+    variants?: ProductVariant[];
     category?: string;
     categories?: string[];
     subcategory?: string;
@@ -54,6 +55,22 @@ export interface Product {
     visualKicker?: string;
     visualHeadline?: string;
     visualVolume?: string;
+}
+
+export interface ProductVariant {
+    product_id?: string;
+    variant_id?: string;
+    variant_title?: string;
+    option1?: string;
+    option2?: string;
+    option3?: string;
+    sale_price?: number;
+    original_price?: number;
+    available?: boolean;
+    inventory_quantity?: number;
+    sku?: string;
+    image_url?: string;
+    product_url?: string;
 }
 
 export interface ProductListResult {

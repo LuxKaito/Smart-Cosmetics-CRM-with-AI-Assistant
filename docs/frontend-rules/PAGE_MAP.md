@@ -10,7 +10,7 @@ Next.js App Router: route tương ứng thư mục dưới `frontend_v2/src/app/
 | `/products` | `src/app/products/page.tsx` | Header/Footer + `ProductSection`; dùng `productFilters` và product types. |
 | `/products/[id]` | `src/app/products/[id]/page.tsx` | Chi tiết sản phẩm inline; Header/Footer, `productService`, `cartService`, `pricing`. |
 | `/favorites` | `src/app/favorites/page.tsx` | Inline; Header/Footer, `ProductCard`, `favoriteService`, auth store. |
-| `/cart` | `src/app/cart/page.tsx` | Giỏ hàng inline; Header/Footer, cart types/store/service liên quan. |
+| `/cart` | `src/app/cart/page.tsx` | Giỏ hàng inline; Header/Footer, `CartRecommendations`, cart types/store/service liên quan. |
 | `/checkout` | `src/app/checkout/page.tsx` | Checkout inline; Header/Footer, cart/auth/order helpers. |
 | `/checkout/success` | `src/app/checkout/success/page.tsx` | Kết quả thành công; tra đơn qua `orderService`. |
 | `/checkout/failed` | `src/app/checkout/failed/page.tsx` | Trang checkout thất bại inline. |

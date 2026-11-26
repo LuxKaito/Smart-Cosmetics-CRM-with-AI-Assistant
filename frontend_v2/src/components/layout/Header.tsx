@@ -1,5 +1,6 @@
 "use client";
 
+import { Heart, LockKeyhole, LogOut, MapPin, PackageCheck, TicketPercent, UserRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -210,36 +211,7 @@ export default function Header() {
                                     <span
                                         className="account-dropdown-icon"
                                         aria-hidden="true">
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 20 20"
-                                            fill="none">
-                                            <rect
-                                                x="4"
-                                                y="4"
-                                                width="12"
-                                                height="2"
-                                                rx="1"
-                                                fill="#f999b7"
-                                            />
-                                            <rect
-                                                x="4"
-                                                y="9"
-                                                width="12"
-                                                height="2"
-                                                rx="1"
-                                                fill="#f999b7"
-                                            />
-                                            <rect
-                                                x="4"
-                                                y="14"
-                                                width="8"
-                                                height="2"
-                                                rx="1"
-                                                fill="#f999b7"
-                                            />
-                                        </svg>
+                                        <UserRound size={20} strokeWidth={1.8} />
                                     </span>
                                     Tài khoản của bạn
                                 </Link>
@@ -249,36 +221,7 @@ export default function Header() {
                                     <span
                                         className="account-dropdown-icon"
                                         aria-hidden="true">
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 20 20"
-                                            fill="none">
-                                            <rect
-                                                x="4"
-                                                y="4"
-                                                width="12"
-                                                height="2"
-                                                rx="1"
-                                                fill="#f999b7"
-                                            />
-                                            <rect
-                                                x="4"
-                                                y="9"
-                                                width="8"
-                                                height="2"
-                                                rx="1"
-                                                fill="#f999b7"
-                                            />
-                                            <rect
-                                                x="4"
-                                                y="14"
-                                                width="6"
-                                                height="2"
-                                                rx="1"
-                                                fill="#f999b7"
-                                            />
-                                        </svg>
+                                        <PackageCheck size={20} strokeWidth={1.8} />
                                     </span>
                                     Đơn hàng của tôi
                                 </Link>
@@ -288,27 +231,7 @@ export default function Header() {
                                     <span
                                         className="account-dropdown-icon"
                                         aria-hidden="true">
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 20 20"
-                                            fill="none">
-                                            <rect
-                                                x="3"
-                                                y="5"
-                                                width="14"
-                                                height="10"
-                                                rx="2"
-                                                stroke="#f999b7"
-                                                strokeWidth="2"
-                                            />
-                                            <path
-                                                d="M7 8h6M7 12h4"
-                                                stroke="#f999b7"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                            />
-                                        </svg>
+                                        <TicketPercent size={20} strokeWidth={1.8} />
                                     </span>
                                     Voucher của tôi
                                 </Link>
@@ -318,16 +241,7 @@ export default function Header() {
                                     <span
                                         className="account-dropdown-icon"
                                         aria-hidden="true">
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 20 20"
-                                            fill="none">
-                                            <path
-                                                d="M10 17l-1.45-1.32C5.4 13.36 2 10.28 2 7.5 2 5.5 3.5 4 5.5 4c1.54 0 3.04 1.04 3.57 2.36h1.87C11.46 5.04 12.96 4 14.5 4 16.5 4 18 5.5 18 7.5c0 2.78-3.4 5.86-6.55 8.18L10 17z"
-                                                fill="#f999b7"
-                                            />
-                                        </svg>
+                                        <Heart size={20} strokeWidth={1.8} />
                                     </span>
                                     Sản phẩm yêu thích
                                 </Link>
@@ -337,24 +251,7 @@ export default function Header() {
                                     <span
                                         className="account-dropdown-icon"
                                         aria-hidden="true">
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 20 20"
-                                            fill="none">
-                                            <circle
-                                                cx="10"
-                                                cy="8"
-                                                r="3"
-                                                stroke="#f999b7"
-                                                strokeWidth="2"
-                                            />
-                                            <path
-                                                d="M10 2C6.13 2 3 5.13 3 9c0 5.25 7 9 7 9s7-3.75 7-9c0-3.87-3.13-7-7-7z"
-                                                stroke="#f999b7"
-                                                strokeWidth="2"
-                                            />
-                                        </svg>
+                                        <MapPin size={20} strokeWidth={1.8} />
                                     </span>
                                     Địa chỉ giao hàng
                                 </Link>
@@ -364,27 +261,7 @@ export default function Header() {
                                     <span
                                         className="account-dropdown-icon"
                                         aria-hidden="true">
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 20 20"
-                                            fill="none">
-                                            <rect
-                                                x="4"
-                                                y="8"
-                                                width="12"
-                                                height="9"
-                                                rx="2"
-                                                stroke="#f999b7"
-                                                strokeWidth="2"
-                                            />
-                                            <path
-                                                d="M7 8V6a3 3 0 016 0v2"
-                                                stroke="#f999b7"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                            />
-                                        </svg>
+                                        <LockKeyhole size={20} strokeWidth={1.8} />
                                     </span>
                                     Đổi mật khẩu
                                 </Link>
@@ -395,24 +272,7 @@ export default function Header() {
                                     <span
                                         className="account-dropdown-icon"
                                         aria-hidden="true">
-                                        <svg
-                                            width="20"
-                                            height="20"
-                                            viewBox="0 0 20 20"
-                                            fill="none">
-                                            <circle
-                                                cx="10"
-                                                cy="10"
-                                                r="8"
-                                                stroke="#f999b7"
-                                                strokeWidth="2"
-                                            />
-                                            <path
-                                                d="M13 10a3 3 0 11-6 0 3 3 0 016 0z"
-                                                stroke="#f999b7"
-                                                strokeWidth="2"
-                                            />
-                                        </svg>
+                                        <LogOut size={20} strokeWidth={1.8} />
                                     </span>
                                     Đăng xuất
                                 </button>

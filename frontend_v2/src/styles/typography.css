@@ -19,6 +19,19 @@ h1, h2 {
     letter-spacing: -0.015em;
 }
 
+.cart-page-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 2rem;
+}
+
+@media (min-width: 640px) {
+    .cart-page-heading {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+    }
+}
+
 h3, h4, h5, h6 {
     font-family: var(--font-body);
 }

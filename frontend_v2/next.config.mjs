@@ -23,6 +23,16 @@ const nextConfig = {
             },
             {
                 protocol: "https",
+                hostname: "product.hstatic.net",
+                pathname: "/**",
+            },
+            {
+                protocol: "https",
+                hostname: "cdn.hstatic.net",
+                pathname: "/**",
+            },
+            {
+                protocol: "https",
                 hostname: "i.pravatar.cc",
                 pathname: "/**",
             },
