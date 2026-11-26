@@ -2487,9 +2487,10 @@ h2 {
 }
 
 .site-footer {
-    background: #f1edf1;
+    background: #FDE8EF;
     margin-top: 46px;
     padding-top: 28px;
+    border-top: 1px solid rgba(232, 79, 131, 0.2);
 }
 
 .footer-grid {
@@ -2504,40 +2505,62 @@ h2 {
 
 .site-footer h3 {
     margin-top: 0;
-    margin-bottom: 12px;
-    font-size: 28px;
-    line-height: 1.2;
+    margin-bottom: 16px;
+    font-size: 26px;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
     font-family: var(--font-heading);
+}
+
+.site-footer h3::after {
+    display: block;
+    width: 36px;
+    height: 2px;
+    margin-top: 9px;
+    border-radius: 999px;
+    background: #F27BA0;
+    content: "";
 }
 
 .site-footer p,
 .site-footer li {
-    line-height: 1.55;
+    font-size: 15px;
+    line-height: 1.65;
 }
 
 .site-footer ul {
+    display: grid;
+    gap: 8px;
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
 .site-footer li {
-    margin-bottom: 10px;
+    margin-bottom: 0;
 }
 
 .newsletter {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: stretch;
-    gap: 8px;
+    gap: 10px;
 }
 
 .newsletter input {
     width: 100%;
     min-width: 0;
-    border: 0;
+    border: 1px solid rgba(216, 91, 133, 0.24);
     border-radius: 999px;
-    padding: 10px 12px;
+    padding: 10px 16px;
+    background: #FFFFFF;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.newsletter input:focus {
+    border-color: #E84F83;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(232, 79, 131, 0.12);
 }
 
 .newsletter button {
@@ -2548,11 +2571,20 @@ h2 {
     padding: 0 16px;
     font-weight: 700;
     white-space: nowrap;
+    transition: filter 160ms ease, transform 160ms ease;
+}
+
+.newsletter button:hover {
+    filter: brightness(1.04);
+    transform: translateY(-1px);
 }
 
 .copyright {
-    margin-top: 22px;
+    margin-top: 26px;
+    padding-top: 15px;
     padding-bottom: 20px;
+    border-top: 1px solid rgba(216, 91, 133, 0.18);
+    font-size: 14px;
     color: #5c5b68;
 }
 
@@ -3258,18 +3290,18 @@ h2 {
 }
 
 .site-footer {
-    background: #241923;
-    color: #f7edf2;
+    background: #FDE8EF;
+    color: #1B2438;
 }
 
 .site-footer p,
 .site-footer li,
 .copyright {
-    color: #d8c8d1;
+    color: #5B5260;
 }
 
 .site-footer h3 {
-    color: #fff;
+    color: #17233D;
 }
 
 .newsletter input {
@@ -4490,7 +4522,7 @@ h2 {
 }
 
 .site-footer a:hover {
-    color: #f999b7;
+    color: #D84478;
 }
 
 @media (max-width: 1120px) {
