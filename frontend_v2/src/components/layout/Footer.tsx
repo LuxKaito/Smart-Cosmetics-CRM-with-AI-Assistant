@@ -40,7 +40,7 @@ export default function Footer() {
                     <h3>Góc làm đẹp</h3>
                     <ul>
                         <li>
-                            <Link href="/review-my-pham">Review mỹ phẩm</Link>
+                            <Link href="/review-my-pham">GÓC LÀM ĐẸP LUXBERRY</Link>
                         </li>
                         <li>
                             <Link href="/tin-tuc-luxberry">

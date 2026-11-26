@@ -9,6 +9,7 @@ export interface EditorialArticle {
     publishedAt: string;
     tone: "rose" | "beige" | "peach" | "lavender";
     imageUrl?: string;
+    slogan?: string;
     detailImages?: string[];
     content?: string;
 }

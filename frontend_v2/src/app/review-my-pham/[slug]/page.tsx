@@ -22,7 +22,7 @@ export default async function BeautyReviewDetailPage({
         <EditorialDetailPage
             article={article}
             listingHref="/review-my-pham"
-            listingLabel="Review mỹ phẩm"
+            listingLabel="GÓC LÀM ĐẸP LUXBERRY"
         />
     );
 }
