@@ -448,7 +448,7 @@ export default function Header() {
                     </div>
                     <Link href="/chinh-sach-doi-tra">Chính sách đổi trả</Link>
                     <Link href="/he-thong-cua-hang">Hệ thống cửa hàng</Link>
-                    <Link href="/review-my-pham">Review mỹ phẩm</Link>
+                    <Link href="/review-my-pham">GÓC LÀM ĐẸP LUXBERRY</Link>
                     <Link href="/tin-tuc-luxberry">Tin tức Luxberry</Link>
                 </nav>
             </div>

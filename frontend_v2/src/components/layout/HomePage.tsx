@@ -17,10 +17,7 @@ import BestSellerSection from "../ui/BestSellerSection";
 import BrandStrip from "../ui/BrandStrip";
 import ComprehensiveCareSection from "../ui/ComprehensiveCareSection";
 import EditorialSection from "../editorial/EditorialSection";
-import {
-    beautyReviewArticles,
-    luxberryNewsArticles,
-} from "../../data/editorialContent";
+import { beautyReviewArticles } from "../../data/editorialContent";
 
 const serviceItems: Array<{ title: string; text: string }> = [];
 
@@ -212,21 +209,13 @@ export default function HomePage() {
 
                 <section className="container">
                     <EditorialSection
-                        title="Review mỹ phẩm"
+                        title="GÓC LÀM ĐẸP LUXBERRY"
                         articles={beautyReviewArticles}
                         viewAllHref="/review-my-pham"
                         articleBaseHref="/review-my-pham"
                     />
                 </section>
 
-                <section className="container">
-                    <EditorialSection
-                        title="Tin tức LuxBerry"
-                        articles={luxberryNewsArticles}
-                        viewAllHref="/tin-tuc-luxberry"
-                        articleBaseHref="/tin-tuc-luxberry"
-                    />
-                </section>
             </main>
 
             <Footer />
